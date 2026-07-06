@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wishroom</title>
 <meta name="description" content="Your personal shopping wishlist and moodboard.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍</text></svg>">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%8D%3C/text%3E%3C/svg%3E">
 <style>
 html,body{margin:0;background:#f9f3ec}
 #dc-loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font:14px/1 system-ui,sans-serif;color:#c9b9ab;letter-spacing:.04em}
@@ -795,23 +795,25 @@ class Component extends DCLogic {
 
   componentDidMount() {
     document.addEventListener('paste', this.onPaste);
+    const apply = (saved) => {
+      if (saved && Array.isArray(saved.items) && Array.isArray(saved.boards)) {
+        this.setState({
+          items: saved.items,
+          boards: saved.boards,
+          nextId: saved.nextId || this.state.nextId,
+          archived: saved.archived || [],
+          tags: saved.tags || []
+        }, () => this.reprocessImages());
+      }
+    };
     try {
       const raw = localStorage.getItem('wishroom-state-v1');
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (saved && Array.isArray(saved.items) && Array.isArray(saved.boards)) {
-          // migrations: seed items/boards added in chat that a saved state may predate
-          let items = saved.items, boards = saved.boards;
-          if (!items.some(i => i.id === 20)) {
-            items = [this.state.items.find(i => i.id === 20), ...items].filter(Boolean);
-          }
-          if (!boards.some(b => b.id === 'b3')) {
-            boards = [...boards, { id: 'b3', name: 'living room', itemIds: [20] }];
-          }
-          this.setState({ items, boards, nextId: saved.nextId || 100, archived: saved.archived || [], tags: saved.tags || [] }, () => this.reprocessImages());
-        }
-      }
-    } catch (e) { /* corrupted save — start fresh */ }
+      if (raw) { apply(JSON.parse(raw)); return; }
+    } catch (e) { /* corrupted save */ }
+    fetch('./data.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) apply(d); })
+      .catch(() => {});
   }
 
   componentDidUpdate() {
