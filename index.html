@@ -21,6 +21,22 @@ body:has(#dc-root) #dc-loading{display:none}
 <style>body{margin:0;background:#f9f3ec}@keyframes wrFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}</style>
 </helmet>
 <div style="min-height:100vh; background:#f9f3ec; color:#4a3f38; font-family:'Karla',sans-serif">
+<sc-if value="{{ !pat }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex; align-items:center; justify-content:center; min-height:100vh">
+    <div style="background:#fff; border-radius:20px; padding:40px 36px; width:360px; box-shadow:0 12px 48px rgba(60,40,20,.13); display:flex; flex-direction:column; gap:18px">
+      <div style="display:flex; flex-direction:column; gap:6px">
+        <div style="font-family:'DM Serif Display',serif; font-size:30px; color:#3d332c">wishroom <span style="color:#d9917f">✿</span></div>
+        <div style="font-size:13px; color:#b3a294">enter your github token to continue</div>
+      </div>
+      <input type="password" value="{{ patInput }}" onChange="{{ onPatInput }}" onKeyDown="{{ patKeyDown }}" placeholder="github_pat_…" style="font-family:'Karla',sans-serif; font-size:14px; color:#4a3f38; background:#f9f3ec; border:1.5px solid #e8ddd4; border-radius:10px; padding:11px 14px; outline:none; box-sizing:border-box; width:100%" style-focus="border-color:#d9917f">
+      <sc-if value="{{ !!patError }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12px; color:#c17a5f; margin-top:-6px">{{ patError }}</div>
+      </sc-if>
+      <div onClick="{{ submitPat }}" style="cursor:pointer; background:#4a3f38; color:#f9f3ec; text-align:center; padding:13px; border-radius:10px; font-size:14px; font-weight:700; user-select:none" style-hover="background:#3d332c">connect</div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ !!pat }}" hint-placeholder-val="{{ true }}">
 <div style="max-width:1160px; margin:0 auto; padding:30px 40px 60px; display:flex; flex-direction:column; gap:24px">
   <input type="file" accept="image/*" ref="{{ fileRef }}" onChange="{{ onFilePicked }}" style="display:none">
   <input type="file" accept="application/json" ref="{{ importRef }}" onChange="{{ onImportPicked }}" style="display:none">
@@ -112,9 +128,9 @@ body:has(#dc-root) #dc-loading{display:none}
             </div>
             <div onClick="{{ closeView }}" style="cursor:pointer; width:28px; height:28px; border-radius:99px; background:#f9f3ec; color:#7d6f63; display:flex; align-items:center; justify-content:center; font-size:14px; flex:none; user-select:none" style-hover="background:#f0e5d8">×</div>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center">
-            <span style="font-size:12.5px; color:#b3a294">{{ viewStore }}</span>
-            <span style="font-size: 12.5px; font-weight: 700; background: {{ accentSoft }}; color: {{ accentDeep }}; padding: 3px 10px; border-radius: 999px">{{ viewPrice }}</span>
+          <div style="display:flex; gap:8px; align-items:center">
+            <input value="{{ viewStore }}" onChange="{{ viewSetStore }}" placeholder="store" style="flex:1; min-width:0; font-family:'Karla',sans-serif; font-size:12.5px; color:#7d6f63; background:#f9f3ec; border:none; outline:none; border-radius:8px; padding:6px 10px" style-focus="background:#eeddd0">
+            <input value="{{ viewPriceRaw }}" onChange="{{ viewSetPrice }}" placeholder="price" style="width:76px; font-family:'Karla',sans-serif; font-size:12.5px; font-weight:700; background:{{ accentSoft }}; color:{{ accentDeep }}; border:none; outline:none; border-radius:999px; padding:5px 10px; text-align:center">
           </div>
           <div style="display:flex; flex-direction:column; gap:5px">
             <span style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.12em; color:#b3a294">LINK</span>
@@ -181,7 +197,12 @@ body:has(#dc-root) #dc-loading{display:none}
 
   <!-- header -->
   <div style="display:flex; align-items:center; justify-content:space-between; gap:20px">
-    <div style="font-family:'DM Serif Display',serif; font-size:27px; color:#3d332c; flex:none">wishroom <span style="color:{{ accent }}">✿</span></div>
+    <div style="display:flex; align-items:center; gap:12px; flex:none">
+      <div style="font-family:'DM Serif Display',serif; font-size:27px; color:#3d332c">wishroom <span style="color:{{ accent }}">✿</span></div>
+      <sc-if value="{{ syncing }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size:11px; color:#b3a294; font-style:italic">saving…</span>
+      </sc-if>
+    </div>
     <div style="display:flex; gap:10px; align-items:center">
       <input value="{{ link }}" onChange="{{ onLinkChange }}" onKeyDown="{{ onLinkKey }}" placeholder="Paste a shop link…" style="font-family:'Karla',sans-serif; font-size:13px; color:#4a3f38; background:#fff; border:none; outline:none; border-radius:999px; padding:11px 18px; width:250px; min-width:120px; flex-shrink:1; box-shadow:0 1px 3px rgba(90,70,50,.07)">
       <div onClick="{{ saveLink }}" style="cursor:pointer; font-size:13px; font-weight:700; background:{{ accent }}; color:#fff; padding:11px 20px; border-radius:999px; user-select:none" style-hover="filter:brightness(1.06)">Save it</div>
@@ -203,6 +224,7 @@ body:has(#dc-root) #dc-loading{display:none}
         </sc-if>
         <div onClick="{{ exportData }}" title="download all your data as a file" style="cursor:pointer; font-size:12px; color:#b3a294; user-select:none" style-hover="color:#7d6f63">export</div>
         <div onClick="{{ startImport }}" title="load a previously exported file" style="cursor:pointer; font-size:12px; color:#b3a294; user-select:none" style-hover="color:#7d6f63">import</div>
+        <div onClick="{{ signOut }}" style="cursor:pointer; font-size:12px; color:#b3a294; user-select:none" style-hover="color:#c17a5f">sign out</div>
         <div style="font-size:12px; color:#b3a294">{{ folderTotal }} in open wishes</div>
       </div>
     </div>
@@ -445,6 +467,7 @@ body:has(#dc-root) #dc-loading{display:none}
   </sc-if>
 
 </div>
+</sc-if>
 </div>
 
 </x-dc>
@@ -454,6 +477,11 @@ body:has(#dc-root) #dc-loading{display:none}
 }">
 class Component extends DCLogic {
   state = {
+    pat: null,
+    patInput: '',
+    patError: null,
+    ghSha: null,
+    syncing: false,
     folder: 'Home',
     boardId: null,
     trayOpen: false,
@@ -793,39 +821,88 @@ class Component extends DCLogic {
     document.removeEventListener('paste', this.onPaste);
   }
 
+  _saveTimer = null;
+  _loaded = false;
+
   componentDidMount() {
     document.addEventListener('paste', this.onPaste);
-    const apply = (saved) => {
-      if (saved && Array.isArray(saved.items) && Array.isArray(saved.boards)) {
-        this.setState({
-          items: saved.items,
-          boards: saved.boards,
-          nextId: saved.nextId || this.state.nextId,
-          archived: saved.archived || [],
-          tags: saved.tags || []
-        }, () => this.reprocessImages());
-      }
-    };
-    try {
-      const raw = localStorage.getItem('wishroom-state-v1');
-      if (raw) { apply(JSON.parse(raw)); return; }
-    } catch (e) { /* corrupted save */ }
-    fetch('./data.json')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) apply(d); })
-      .catch(() => {});
+    const stored = localStorage.getItem('wishroom-pat');
+    if (stored) this.loadFromGitHub(stored);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
+    const DATA = ['items', 'boards', 'nextId', 'archived', 'tags'];
+    if (this._loaded && this.state.pat && DATA.some(k => this.state[k] !== prevState[k])) {
+      this.scheduleGithubSave();
+    }
+  }
+
+  async loadFromGitHub(pat) {
+    this._loaded = false;
     try {
-      localStorage.setItem('wishroom-state-v1', JSON.stringify({
-        items: this.state.items,
-        boards: this.state.boards,
-        nextId: this.state.nextId,
-        archived: this.state.archived,
-        tags: this.state.tags
-      }));
-    } catch (e) { /* storage unavailable */ }
+      const res = await fetch('https://api.github.com/repos/pliggity/wishroom/contents/data.json', {
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+      });
+      if (!res.ok) {
+        this.setState({ patError: res.status === 401 ? 'Invalid token.' : `GitHub error ${res.status}.` });
+        return;
+      }
+      const file = await res.json();
+      const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+      const data = JSON.parse(json);
+      localStorage.setItem('wishroom-pat', pat);
+      const patch = { pat, ghSha: file.sha, patError: null };
+      if (data && Array.isArray(data.items) && Array.isArray(data.boards)) {
+        patch.items = data.items;
+        patch.boards = data.boards;
+        patch.nextId = data.nextId || this.state.nextId;
+        patch.archived = data.archived || [];
+        patch.tags = data.tags || [];
+      }
+      this.setState(patch, () => { this._loaded = true; this.reprocessImages(); });
+    } catch (e) {
+      this.setState({ patError: 'Failed to connect to GitHub.' });
+    }
+  }
+
+  scheduleGithubSave() {
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => this.doGithubSave(), 3000);
+  }
+
+  async doGithubSave() {
+    const { pat, ghSha } = this.state;
+    if (!pat || !ghSha) return;
+    const data = { items: this.state.items, boards: this.state.boards, nextId: this.state.nextId, archived: this.state.archived, tags: this.state.tags };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    this.setState({ syncing: true });
+    try {
+      const res = await fetch('https://api.github.com/repos/pliggity/wishroom/contents/data.json', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'update wishroom', content: encoded, sha: ghSha })
+      });
+      if (res.ok) {
+        const result = await res.json();
+        this.setState({ syncing: false, ghSha: result.content.sha });
+      } else {
+        this.setState({ syncing: false });
+      }
+    } catch {
+      this.setState({ syncing: false });
+    }
+  }
+
+  submitPat() {
+    const pat = this.state.patInput.trim();
+    if (!pat) return;
+    this.setState({ patError: null });
+    this.loadFromGitHub(pat);
+  }
+
+  signOut() {
+    localStorage.removeItem('wishroom-pat');
+    this.setState({ pat: null, patInput: '', ghSha: null, patError: null });
   }
 
   imgCss(item, fit) {
@@ -1103,6 +1180,9 @@ class Component extends DCLogic {
       viewName: vi ? vi.name : '',
       viewRename: e => vi && editItem(vi.id, { name: e.target.value }),
       viewStore: vi ? vi.store : '',
+      viewSetStore: e => vi && editItem(vi.id, { store: e.target.value }),
+      viewPriceRaw: vi ? (vi.price == null ? '' : String(vi.price)) : '',
+      viewSetPrice: e => { const n = parseFloat(String(e.target.value).replace(/[^0-9.]/g, '')); vi && editItem(vi.id, { price: isNaN(n) ? null : n }); },
       viewPrice: vi ? (vi.price == null ? (vi.owned ? '—' : 'price?') : '$' + vi.price) : '',
       viewHasUrl: !!(vi && vi.url),
       viewUrl: vi && vi.url ? vi.url : '',
@@ -1340,7 +1420,15 @@ class Component extends DCLogic {
       gridEditColor: s.gridEditOpen ? '#f9f3ec' : '#7d6f63',
       toggleGridEdit: () => this.setState(st => ({ gridEditOpen: !st.gridEditOpen })),
       canvasHeight: boardCanvasHeight,
-      gridHint: s.gridEditOpen ? 'drag ⠿ to move a tile anywhere · drag the corner to resize · tiles won\u2019t overlap' : 'the palette strip re-mixes as you add and remove items'
+      gridHint: s.gridEditOpen ? 'drag ⠿ to move a tile anywhere · drag the corner to resize · tiles won\u2019t overlap' : 'the palette strip re-mixes as you add and remove items',
+      pat: s.pat,
+      patInput: s.patInput,
+      patError: s.patError,
+      syncing: s.syncing,
+      onPatInput: e => this.setState({ patInput: e.target.value, patError: null }),
+      patKeyDown: e => { if (e.key === 'Enter') this.submitPat(); },
+      submitPat: () => this.submitPat(),
+      signOut: () => this.signOut()
     };
   }
 }
