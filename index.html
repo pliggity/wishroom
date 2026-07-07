@@ -23,16 +23,23 @@ body:has(#dc-root) #dc-loading{display:none}
 <div style="min-height:100vh; background:#f9f3ec; color:#4a3f38; font-family:'Karla',sans-serif">
 <sc-if value="{{ !pat }}" hint-placeholder-val="{{ false }}">
   <div style="display:flex; align-items:center; justify-content:center; min-height:100vh">
-    <div style="background:#fff; border-radius:20px; padding:40px 36px; width:360px; box-shadow:0 12px 48px rgba(60,40,20,.13); display:flex; flex-direction:column; gap:18px">
-      <div style="display:flex; flex-direction:column; gap:6px">
+    <div style="background:#fff; border-radius:20px; padding:40px 36px; width:340px; box-shadow:0 12px 48px rgba(60,40,20,.13); display:flex; flex-direction:column; gap:20px; align-items:center; text-align:center">
+      <div style="display:flex; flex-direction:column; gap:6px; align-items:center">
         <div style="font-family:'DM Serif Display',serif; font-size:30px; color:#3d332c">wishroom <span style="color:#d9917f">✿</span></div>
-        <div style="font-size:13px; color:#b3a294">enter your github token to continue</div>
+        <div style="font-size:13px; color:#b3a294">a private wishlist</div>
       </div>
-      <input type="password" value="{{ patInput }}" onChange="{{ onPatInput }}" onKeyDown="{{ patKeyDown }}" placeholder="github_pat_…" style="font-family:'Karla',sans-serif; font-size:14px; color:#4a3f38; background:#f9f3ec; border:1.5px solid #e8ddd4; border-radius:10px; padding:11px 14px; outline:none; box-sizing:border-box; width:100%" style-focus="border-color:#d9917f">
-      <sc-if value="{{ !!patError }}" hint-placeholder-val="{{ false }}">
-        <div style="font-size:12px; color:#c17a5f; margin-top:-6px">{{ patError }}</div>
+      <sc-if value="{{ authLoading }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px; color:#b3a294; font-style:italic; padding:8px 0">signing in…</div>
       </sc-if>
-      <div onClick="{{ submitPat }}" style="cursor:pointer; background:#4a3f38; color:#f9f3ec; text-align:center; padding:13px; border-radius:10px; font-size:14px; font-weight:700; user-select:none" style-hover="background:#3d332c">connect</div>
+      <sc-if value="{{ !authLoading }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ !!patError }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px; color:#c17a5f">{{ patError }}</div>
+        </sc-if>
+        <a href="{{ githubAuthUrl }}" style="display:flex; align-items:center; justify-content:center; gap:10px; background:#24292f; color:#fff; text-decoration:none; padding:13px 24px; border-radius:10px; font-size:14px; font-weight:600; user-select:none; width:100%; box-sizing:border-box" style-hover="background:#1a1f24">
+          <svg viewBox="0 0 16 16" style="width:18px;height:18px;fill:currentColor;flex:none"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Sign in with GitHub
+        </a>
+      </sc-if>
     </div>
   </div>
 </sc-if>
@@ -478,8 +485,8 @@ body:has(#dc-root) #dc-loading{display:none}
 class Component extends DCLogic {
   state = {
     pat: null,
-    patInput: '',
     patError: null,
+    authLoading: false,
     ghSha: null,
     syncing: false,
     folder: 'Home',
@@ -827,7 +834,39 @@ class Component extends DCLogic {
   componentDidMount() {
     document.addEventListener('paste', this.onPaste);
     const stored = localStorage.getItem('wishroom-pat');
-    if (stored) this.loadFromGitHub(stored);
+    if (stored) { this.loadFromGitHub(stored); return; }
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) {
+      history.replaceState({}, '', window.location.pathname);
+      this.exchangeCode(code);
+    }
+  }
+
+  async exchangeCode(code) {
+    this.setState({ authLoading: true, patError: null });
+    try {
+      const res = await fetch('https://wishroom-oauth.pliggity.workers.dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+      if (!data.access_token) {
+        this.setState({ authLoading: false, patError: 'Sign-in failed — try again.' });
+        return;
+      }
+      const userRes = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${data.access_token}` }
+      });
+      const user = await userRes.json();
+      if (user.login !== 'pliggity') {
+        this.setState({ authLoading: false, patError: 'This app is private.' });
+        return;
+      }
+      this.loadFromGitHub(data.access_token);
+    } catch {
+      this.setState({ authLoading: false, patError: 'Sign-in failed — try again.' });
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -861,7 +900,7 @@ class Component extends DCLogic {
       }
       this.setState(patch, () => { this._loaded = true; this.reprocessImages(); });
     } catch (e) {
-      this.setState({ patError: 'Failed to connect to GitHub.' });
+      this.setState({ patError: 'Failed to connect to GitHub.', authLoading: false });
     }
   }
 
@@ -893,16 +932,9 @@ class Component extends DCLogic {
     }
   }
 
-  submitPat() {
-    const pat = this.state.patInput.trim();
-    if (!pat) return;
-    this.setState({ patError: null });
-    this.loadFromGitHub(pat);
-  }
-
   signOut() {
     localStorage.removeItem('wishroom-pat');
-    this.setState({ pat: null, patInput: '', ghSha: null, patError: null });
+    this.setState({ pat: null, ghSha: null, patError: null, authLoading: false });
   }
 
   imgCss(item, fit) {
@@ -1422,12 +1454,10 @@ class Component extends DCLogic {
       canvasHeight: boardCanvasHeight,
       gridHint: s.gridEditOpen ? 'drag ⠿ to move a tile anywhere · drag the corner to resize · tiles won\u2019t overlap' : 'the palette strip re-mixes as you add and remove items',
       pat: s.pat,
-      patInput: s.patInput,
       patError: s.patError,
+      authLoading: s.authLoading,
       syncing: s.syncing,
-      onPatInput: e => this.setState({ patInput: e.target.value, patError: null }),
-      patKeyDown: e => { if (e.key === 'Enter') this.submitPat(); },
-      submitPat: () => this.submitPat(),
+      githubAuthUrl: 'https://github.com/login/oauth/authorize?client_id=Ov23lijpZJuBnpW8mbVl&scope=public_repo',
       signOut: () => this.signOut()
     };
   }
