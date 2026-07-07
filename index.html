@@ -79,13 +79,13 @@ body:has(#dc-root) #dc-loading{display:none}
   <sc-if value="{{ customOpen }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ cancelCustom }}" style="position:fixed; inset:0; background:rgba(61,51,44,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
       <div onClick="{{ stopClick }}" style="background:#fff; border-radius:20px; width:440px; max-height:86vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:16px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
-        <div style="font-family:'DM Serif Display',serif; font-size:21px; color:#3d332c">new custom tile</div>
+        <div style="font-family:'DM Serif Display',serif; font-size:21px; color:#3d332c">{{ draftTitle }}</div>
         <div onClick="{{ pickDraftImage }}" onDragOver="{{ dragOver }}" onDrop="{{ dropDraftImage }}" style="cursor:pointer; height:190px; border-radius:12px; background:{{ draftBg }}; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center" style-hover="filter:brightness(.97)">
           <sc-if value="{{ draftHasImg }}" hint-placeholder-val="{{ false }}">
             <div style="{{ draftImgCss }}"></div>
           </sc-if>
           <sc-if value="{{ draftNoImg }}" hint-placeholder-val="{{ true }}">
-            <span style="font-family:ui-monospace,monospace; font-size:10.5px; color:#a4917f; text-align:center; padding:0 20px">click, drop, or paste (⌘V) a photo here</span>
+            <span style="font-family:ui-monospace,monospace; font-size:10.5px; color:#a4917f; text-align:center; padding:0 20px">{{ draftImgHint }}</span>
           </sc-if>
         </div>
         <div style="display:flex; flex-direction:column; gap:5px">
@@ -1039,12 +1039,30 @@ class Component extends DCLogic {
     const raw = this.state.link.trim();
     if (!raw) return;
     const m = raw.match(/([a-z0-9-]+)\.(com|co|net|org|shop|store|io|us|uk)/i);
-    const store = m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : 'Saved link';
-    this.setState(s => ({
+    const store = m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : '';
+    const folder = this.state.folder === 'All' ? 'Home' : this.state.folder;
+    this.setState({
       link: '',
-      nextId: s.nextId + 1,
-      items: [{ id: s.nextId, name: 'New find', store, price: null, url: raw, folder: s.folder === 'All' ? 'Home' : s.folder, tones: ['#eceae5', '#dcd8ce'], span: 2, photo: 'photo from link' }, ...s.items]
-    }));
+      custom: { name: '', store, price: '', owned: false, folder, img: null, ar: null, tones: ['#eceae5', '#dcd8ce'], url: raw, fetching: true }
+    });
+    this.fetchLinkMeta(raw);
+  }
+
+  async fetchLinkMeta(url) {
+    try {
+      const res = await fetch('https://wishroom-oauth.pliggity.workers.dev/fetch-meta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      this.setState(st => {
+        if (!st.custom || st.custom.url !== url) return null;
+        return { custom: { ...st.custom, fetching: false, name: data.title || '', img: data.image || null } };
+      });
+    } catch {
+      this.setState(st => st.custom && st.custom.url === url ? { custom: { ...st.custom, fetching: false } } : null);
+    }
   }
 
   renderVals() {
@@ -1320,6 +1338,8 @@ class Component extends DCLogic {
         e.target.value = '';
       },
       customOpen: !!s.custom,
+      draftTitle: s.custom && s.custom.url ? 'add from link' : 'new custom tile',
+      draftImgHint: s.custom && s.custom.fetching ? 'fetching image…' : 'click, drop, or paste (⌘V) a photo here',
       openCustom: () => this.setState({ custom: { name: '', store: '', price: '', owned: true, folder: s.folder === 'All' ? 'Home' : s.folder, img: null, ar: null, tones: ['#eceae5', '#dcd8ce'] } }),
       cancelCustom: () => this.setState({ custom: null }),
       pickDraftImage: () => { this.pendingImageItem = 'draft'; this.fileRef.current && this.fileRef.current.click(); },
@@ -1362,7 +1382,8 @@ class Component extends DCLogic {
             store: c.store.trim() || (c.owned ? 'already mine' : ''),
             price: isNaN(price) ? null : price,
             folder: c.folder, tones: c.tones, ar: c.ar, img: c.img,
-            span: 2, photo: 'add a photo', owned: c.owned
+            span: 2, photo: 'add a photo', owned: c.owned,
+            ...(c.url ? { url: c.url } : {})
           }, ...st.items]
         }));
       },
