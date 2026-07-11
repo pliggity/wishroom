@@ -704,18 +704,68 @@ class Component extends DCLogic {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const tones = this.extractTones(ctx, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
         const bbox = this.contentBBox(ctx, canvas.width, canvas.height);
         const ar = Math.round(((bbox ? bbox.w / bbox.h : canvas.width / canvas.height)) * 100) / 100;
-        if (itemId === 'draft') {
-          this.setState(st => st.custom ? { custom: { ...st.custom, img: dataUrl, ar, tones: tones || st.custom.tones } } : {});
-        } else {
-          this.setState(st => ({ items: st.items.map(x => x.id === itemId ? { ...x, img: dataUrl, ar, tones: tones || x.tones } : x) }));
-        }
+        canvas.toBlob(async (blob) => {
+          let imgSrc;
+          try {
+            imgSrc = await this.uploadImage(blob);
+          } catch {
+            imgSrc = canvas.toDataURL('image/jpeg', 0.82);
+          }
+          if (itemId === 'draft') {
+            this.setState(st => st.custom ? { custom: { ...st.custom, img: imgSrc, ar, tones: tones || st.custom.tones } } : {});
+          } else {
+            this.setState(st => ({ items: st.items.map(x => x.id === itemId ? { ...x, img: imgSrc, ar, tones: tones || x.tones } : x) }));
+          }
+        }, 'image/jpeg', 0.82);
       };
       img.src = reader.result;
     };
     reader.readAsDataURL(file);
+  }
+
+  _imagesReleaseId = null;
+
+  async getImagesReleaseId() {
+    if (this._imagesReleaseId) return this._imagesReleaseId;
+    const { pat } = this.state;
+    const res = await fetch('https://api.github.com/repos/pliggity/wishroom/releases/tags/images', {
+      headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!res.ok) throw new Error('no images release');
+    const rel = await res.json();
+    this._imagesReleaseId = rel.id;
+    return rel.id;
+  }
+
+  async uploadImage(blob) {
+    const releaseId = await this.getImagesReleaseId();
+    const name = `img-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const res = await fetch(`https://uploads.github.com/repos/pliggity/wishroom/releases/${releaseId}/assets?name=${encodeURIComponent(name)}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.state.pat}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'image/jpeg'
+      },
+      body: blob
+    });
+    if (!res.ok) throw new Error('upload failed');
+    const asset = await res.json();
+    return asset.browser_download_url;
+  }
+
+  async migrateImages() {
+    const toMigrate = this.state.items.filter(it => it.img && it.img.startsWith('data:'));
+    for (const item of toMigrate) {
+      try {
+        const blob = await fetch(item.img).then(r => r.blob());
+        const url = await this.uploadImage(blob);
+        this.setState(st => ({ items: st.items.map(x => x.id === item.id ? { ...x, img: url } : x) }));
+        await new Promise(r => setTimeout(r, 600));
+      } catch { /* keep base64 if upload fails */ }
+    }
   }
 
   // finds the bounding box of "content" pixels vs. a plain studio backdrop,
@@ -916,7 +966,7 @@ class Component extends DCLogic {
         patch.archived = data.archived || [];
         patch.tags = data.tags || [];
       }
-      this.setState(patch, () => { this._loaded = true; this.reprocessImages(); });
+      this.setState(patch, () => { this._loaded = true; this.reprocessImages(); this.migrateImages(); });
     } catch (e) {
       this.setState({ patError: 'Failed to connect to GitHub.', authLoading: false });
     }
