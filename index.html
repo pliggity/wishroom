@@ -978,16 +978,19 @@ class Component extends DCLogic {
 
   scheduleGithubSave() {
     clearTimeout(this._saveTimer);
+    this.setState({ syncing: true });
     this._saveTimer = setTimeout(() => this.doGithubSave(), 1500);
   }
 
   async doGithubSave() {
     const { pat, ghSha } = this.state;
-    if (!pat || !ghSha) return;
-    const data = { items: this.state.items, boards: this.state.boards, nextId: this.state.nextId, archived: this.state.archived, tags: this.state.tags };
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    this.setState({ syncing: true });
+    if (!pat || !ghSha) {
+      this.setState({ syncing: false, saveError: `save skipped (pat:${!!pat} sha:${!!ghSha})` });
+      return;
+    }
     try {
+      const data = { items: this.state.items, boards: this.state.boards, nextId: this.state.nextId, archived: this.state.archived, tags: this.state.tags };
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
       const res = await fetch('https://api.github.com/repos/pliggity/wishroom/contents/data.json', {
         method: 'PUT',
         headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
