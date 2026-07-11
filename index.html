@@ -826,13 +826,31 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     document.removeEventListener('paste', this.onPaste);
+    window.removeEventListener('beforeunload', this.flushSave);
   }
+
+  flushSave = () => {
+    if (!this._saveTimer) return;
+    clearTimeout(this._saveTimer);
+    this._saveTimer = null;
+    const { pat, ghSha } = this.state;
+    if (!pat || !ghSha) return;
+    const data = { items: this.state.items, boards: this.state.boards, nextId: this.state.nextId, archived: this.state.archived, tags: this.state.tags };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    // keepalive lets the request outlive the page unload (best-effort; may fail if body > 64KB)
+    fetch('https://api.github.com/repos/pliggity/wishroom/contents/data.json', {
+      method: 'PUT', keepalive: true,
+      headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'update wishroom', content: encoded, sha: ghSha })
+    }).catch(() => {});
+  };
 
   _saveTimer = null;
   _loaded = false;
 
   componentDidMount() {
     document.addEventListener('paste', this.onPaste);
+    window.addEventListener('beforeunload', this.flushSave);
     const stored = localStorage.getItem('wishroom-pat');
     if (stored) { this.loadFromGitHub(stored); return; }
     const code = new URLSearchParams(window.location.search).get('code');
@@ -906,7 +924,7 @@ class Component extends DCLogic {
 
   scheduleGithubSave() {
     clearTimeout(this._saveTimer);
-    this._saveTimer = setTimeout(() => this.doGithubSave(), 3000);
+    this._saveTimer = setTimeout(() => this.doGithubSave(), 1500);
   }
 
   async doGithubSave() {
