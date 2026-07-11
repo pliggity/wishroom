@@ -905,13 +905,16 @@ class Component extends DCLogic {
   componentDidMount() {
     document.addEventListener('paste', this.onPaste);
     window.addEventListener('beforeunload', this.flushSave);
-    const stored = localStorage.getItem('wishroom-pat');
-    if (stored) { this.loadFromGitHub(stored); return; }
+    // A fresh OAuth redirect (?code=) always wins over a stored token — a
+    // stale/expired token must never block re-authentication.
     const code = new URLSearchParams(window.location.search).get('code');
     if (code) {
       history.replaceState({}, '', window.location.pathname);
       this.exchangeCode(code);
+      return;
     }
+    const stored = localStorage.getItem('wishroom-pat');
+    if (stored) this.loadFromGitHub(stored);
   }
 
   async exchangeCode(code) {
@@ -971,7 +974,13 @@ class Component extends DCLogic {
         headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
       });
       if (!res.ok) {
-        this.setState({ patError: res.status === 401 ? 'Invalid token.' : `GitHub error ${res.status}.` });
+        // Clear a rejected token so it can't get stuck blocking re-login.
+        if (res.status === 401 || res.status === 403) localStorage.removeItem('wishroom-pat');
+        this.setState({
+          pat: null,
+          authLoading: false,
+          patError: res.status === 401 ? 'Session expired — sign in again.' : `GitHub error ${res.status}.`
+        });
         return;
       }
       const file = await res.json();
