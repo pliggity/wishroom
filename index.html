@@ -1094,9 +1094,16 @@ class Component extends DCLogic {
   componentDidMount() {
     document.addEventListener('paste', this.onPaste);
     window.addEventListener('beforeunload', this.flushSave);
+    const params = new URLSearchParams(window.location.search);
+    // Share-sheet / shortcut entry: ?add=<encoded url>. Stash it (survives the
+    // OAuth round-trip if we're logged out) and fire it once data has loaded.
+    const add = params.get('add');
+    if (add) {
+      sessionStorage.setItem('wishroom-pending-add', add);
+      history.replaceState({}, '', window.location.pathname);
+    }
     // A fresh OAuth redirect (?code=) always wins over a stored token — a
     // stale/expired token must never block re-authentication.
-    const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     if (code) {
       const returnedState = params.get('state');
@@ -1204,7 +1211,11 @@ class Component extends DCLogic {
         patch.archived = data.archived || [];
         patch.tags = data.tags || [];
       }
-      this.setState(patch, () => { this._loaded = true; this._snapshotData(); this.reprocessImages(); this.migrateImages(); });
+      this.setState(patch, () => {
+        this._loaded = true; this._snapshotData(); this.reprocessImages(); this.migrateImages();
+        const pendingAdd = sessionStorage.getItem('wishroom-pending-add');
+        if (pendingAdd) { sessionStorage.removeItem('wishroom-pending-add'); this.addFromLink(pendingAdd); }
+      });
     } catch (e) {
       this.setState({ patError: 'Failed to connect to GitHub.', authLoading: false });
     }
@@ -1436,7 +1447,13 @@ class Component extends DCLogic {
   }
 
   saveLinkNow() {
-    const url = this._safeLink(this.state.link.trim());
+    this.addFromLink(this.state.link);
+  }
+
+  // Opens the add modal pre-filled from a shop link. Shared by the header
+  // input and the share-sheet/shortcut entry (?add=).
+  addFromLink(raw) {
+    const url = this._safeLink(String(raw || '').trim());
     if (!url) { this.setState({ link: '' }); return; }
     const m = url.match(/([a-z0-9-]+)\.(com|co|net|org|shop|store|io|us|uk)/i);
     const store = m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : '';
