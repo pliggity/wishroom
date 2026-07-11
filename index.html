@@ -145,6 +145,50 @@ if('serviceWorker' in navigator){window.addEventListener('load',function(){navig
           <input value="{{ draftStore }}" onChange="{{ draftSetStore }}" placeholder="store (optional)" style="flex:1; min-width:0; font-family:'Karla',sans-serif; font-size:13px; color:#4a3f38; background:#f9f3ec; border:none; outline:none; border-radius:10px; padding:10px 13px">
           <input value="{{ draftPrice }}" onChange="{{ draftSetPrice }}" placeholder="$ (optional)" style="width:110px; font-family:'Karla',sans-serif; font-size:13px; color:#4a3f38; background:#f9f3ec; border:none; outline:none; border-radius:10px; padding:10px 13px">
         </div>
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <span style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.12em; color:#b3a294">ADD TO BOARDS</span>
+          <div style="display:flex; flex-wrap:wrap; gap:7px">
+            <sc-for list="{{ draftBoardList }}" as="db" hint-placeholder-count="2">
+              <div onClick="{{ db.toggle }}" style="cursor:pointer; display:flex; align-items:center; gap:7px; font-size:12px; font-weight:{{ db.weight }}; background:{{ db.bg }}; color:{{ db.color }}; padding:7px 12px; border-radius:999px; user-select:none">
+                <span style="width:14px; height:14px; border-radius:99px; box-shadow:inset 0 0 0 1.5px {{ db.ringColor }}; background:{{ db.dotBg }}; display:flex; align-items:center; justify-content:center; font-size:9px; color:#fff">{{ db.mark }}</span>{{ db.name }}
+              </div>
+            </sc-for>
+            <sc-if value="{{ draftNoBoards }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:11.5px; color:#b3a294; padding:6px 2px">no boards yet — make one from the library</span>
+            </sc-if>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <span style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.12em; color:#b3a294">TAGS</span>
+          <div style="display:flex; flex-wrap:wrap; gap:7px; align-items:center">
+            <sc-for list="{{ draftTagList }}" as="dt" hint-placeholder-count="2">
+              <div onClick="{{ dt.toggle }}" style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:{{ dt.weight }}; background:{{ dt.bg }}; color:{{ dt.color }}; padding:6px 11px; border-radius:999px; user-select:none">
+                <span style="width:9px; height:9px; border-radius:99px; background:{{ dt.dot }}"></span>{{ dt.label }}
+              </div>
+            </sc-for>
+            <div onClick="{{ openTagCreator }}" style="cursor:pointer; font-size:12px; font-weight:700; color:{{ accentDeep }}; padding:6px 11px; border-radius:999px; border:1.5px dashed #dcc9bd; user-select:none" style-hover="background:#f9f3ec">+ new tag</div>
+          </div>
+          <sc-if value="{{ tagCreatorOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:8px; background:#f9f3ec; border-radius:12px; padding:10px 12px; margin-top:2px">
+              <input value="{{ tagDraftName }}" onChange="{{ tagDraftSetName }}" onKeyDown="{{ tagDraftKey }}" placeholder="tag name…" style="font-family:'Karla',sans-serif; font-size:12.5px; color:#4a3f38; background:#fff; border:none; outline:none; border-radius:8px; padding:8px 11px">
+              <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center">
+                <sc-for list="{{ tagColorOptions }}" as="tc" hint-placeholder-count="6">
+                  <div onClick="{{ tc.pick }}" title="{{ tc.color }}" style="cursor:pointer; width:22px; height:22px; border-radius:99px; background:{{ tc.color }}; box-shadow:0 0 0 2px #f9f3ec, 0 0 0 3px {{ tc.ring }}; user-select:none"></div>
+                </sc-for>
+                <div onClick="{{ pickCustomTagColor }}" title="custom color: {{ tagDraftColor }}" style="cursor:pointer; width:22px; height:22px; border-radius:99px; background:{{ tagDraftColorSwatch }}; box-shadow:0 0 0 2px #f9f3ec, 0 0 0 3px {{ customColorRing }}; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; user-select:none">{{ customColorMark }}</div>
+                <input type="color" ref="{{ tagColorRef }}" onChange="{{ onTagColorPicked }}" style="position:absolute; width:0; height:0; opacity:0; border:none; padding:0">
+              </div>
+              <div style="display:flex; gap:8px">
+                <div onClick="{{ saveTagDraft }}" style="cursor:pointer; font-size:12px; font-weight:700; background:#4a3f38; color:#f9f3ec; padding:7px 14px; border-radius:999px; user-select:none">create &amp; add</div>
+                <div onClick="{{ closeTagCreator }}" style="cursor:pointer; font-size:12px; color:#b3a294; padding:7px 10px; border-radius:999px; user-select:none" style-hover="background:#f0e5d8">cancel</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px">
+          <span style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.12em; color:#b3a294">NOTES</span>
+          <textarea value="{{ draftNotes }}" onChange="{{ draftSetNotes }}" placeholder="size, color, where it'd go…" style="font-family:'Karla',sans-serif; font-size:13px; line-height:1.5; color:#4a3f38; background:#f9f3ec; border:none; outline:none; border-radius:12px; padding:11px 14px; resize:none; min-height:70px"></textarea>
+        </div>
         <div style="display:flex; gap:10px; margin-top:2px">
           <div onClick="{{ saveCustom }}" style="cursor:pointer; flex:1; text-align:center; font-size:13px; font-weight:700; background:{{ accent }}; color:#fff; padding:12px 0; border-radius:999px; user-select:none" style-hover="filter:brightness(1.06)">add tile</div>
           <div onClick="{{ cancelCustom }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#b3a294; padding:12px 18px; border-radius:999px; user-select:none" style-hover="background:#f9f3ec">cancel</div>
@@ -1155,6 +1199,51 @@ class Component extends DCLogic {
     return s ? 'https://' + s : '';
   }
 
+  _titleCase(s) {
+    return s.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+  }
+
+  // Best-guess a product name from the URL's path slug, e.g.
+  // /shop/sam-edelman-marcie-woven-ballet-flats -> "Sam Edelman Marcie Woven Ballet Flats"
+  _guessNameFromUrl(url) {
+    try {
+      const parts = new URL(url).pathname.split('/').filter(Boolean).map(p => decodeURIComponent(p));
+      let best = '';
+      for (const seg of parts) {
+        if (/^(shop|products?|p|dp|item|items|c|category|categories|collections?|browse|en|us|intl|pd)$/i.test(seg)) continue;
+        const words = seg.split(/[-_]/).filter(Boolean);
+        if (words.length < 2) continue; // skip ids / skus / single tokens
+        const cleaned = words.filter(w => !/^\d{3,}$/.test(w) && !/^[a-z0-9]{10,}$/i.test(w));
+        if (cleaned.length >= 2 && cleaned.length > best.split(' ').filter(Boolean).length) best = cleaned.join(' ');
+      }
+      return best ? this._titleCase(best) : '';
+    } catch { return ''; }
+  }
+
+  // Pull human-readable size/color/qty from the query string (skips opaque codes)
+  _guessAttrsFromUrl(url) {
+    try {
+      const q = new URL(url).searchParams;
+      const bits = [];
+      const size = q.get('size') || q.get('sz');
+      if (size && /^[\w.]{1,8}$/.test(size)) bits.push('size ' + size);
+      const color = q.get('color') || q.get('colour') || q.get('col');
+      if (color && /^[a-z][a-z\s-]{2,}$/i.test(color)) bits.push('color ' + color.toLowerCase());
+      const qty = q.get('quantity') || q.get('qty');
+      if (qty && /^\d{1,2}$/.test(qty) && qty !== '1') bits.push('qty ' + qty);
+      return bits.join(' · ');
+    } catch { return ''; }
+  }
+
+  // Prefer a real fetched title; fall back to the URL guess when the fetch was
+  // blocked and returned nothing or just a bare domain.
+  _betterTitle(fetched, current) {
+    const f = (fetched || '').trim();
+    if (!f) return current;
+    if (/^[a-z0-9.-]+\.(com|co|net|org|shop|store|io|us|uk)$/i.test(f)) return current;
+    return f;
+  }
+
   importRef = React.createRef();
 
   exportData() {
@@ -1202,16 +1291,21 @@ class Component extends DCLogic {
   TAG_PRESET_COLORS = ['#d9917f', '#c8a96a', '#a8b0a4', '#b08ba6', '#7d9bb0', '#4a3f38'];
   isPresetTagColor(c) { return this.TAG_PRESET_COLORS.includes(c); }
 
-  saveTagDraft(vi) {
+  saveTagDraft() {
     const name = this.state.tagDraft.name.trim();
-    if (!name || !vi) return;
+    if (!name) return;
     const id = 'tag' + Date.now();
     const color = this.state.tagDraft.color;
-    this.setState(st => ({
-      tags: [...st.tags, { id, name, color }],
-      tagCreatorOpen: false,
-      items: st.items.map(x => x.id === vi.id ? { ...x, tagIds: [...(x.tagIds || []), id] } : x)
-    }));
+    this.setState(st => {
+      const patch = { tags: [...st.tags, { id, name, color }], tagCreatorOpen: false };
+      // add the new tag to whichever context is open — the add/link draft or an inspected item
+      if (st.custom) {
+        patch.custom = { ...st.custom, tagIds: [...(st.custom.tagIds || []), id] };
+      } else if (st.viewId != null) {
+        patch.items = st.items.map(x => x.id === st.viewId ? { ...x, tagIds: [...(x.tagIds || []), id] } : x);
+      }
+      return patch;
+    });
   }
 
   // the single source of truth for an item's tile shape — computed once from
@@ -1251,9 +1345,12 @@ class Component extends DCLogic {
     const m = url.match(/([a-z0-9-]+)\.(com|co|net|org|shop|store|io|us|uk)/i);
     const store = m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : '';
     const folder = this.state.folder === 'All' ? 'Home' : this.state.folder;
+    const name = this._guessNameFromUrl(url);
+    const notes = this._guessAttrsFromUrl(url);
     this.setState({
       link: '',
-      custom: { name: '', store, price: '', owned: false, folder, img: null, ar: null, tones: ['#eceae5', '#dcd8ce'], url, fetching: true }
+      tagCreatorOpen: false,
+      custom: { name, store, price: '', owned: false, folder, img: null, ar: null, tones: ['#eceae5', '#dcd8ce'], url, notes, tagIds: [], boardIds: [], fetching: true }
     });
     this.fetchLinkMeta(url);
   }
@@ -1266,10 +1363,11 @@ class Component extends DCLogic {
         body: JSON.stringify({ url })
       });
       const data = await res.json();
-      // set the title immediately; the image is re-hosted (not hot-linked)
+      // set the title immediately; the image is re-hosted (not hot-linked).
+      // Keep the URL-guessed name when the fetch was blocked / returned junk.
       this.setState(st => {
         if (!st.custom || st.custom.url !== url) return null;
-        return { custom: { ...st.custom, fetching: !!data.imageData, name: data.title || '' } };
+        return { custom: { ...st.custom, fetching: !!data.imageData, name: this._betterTitle(data.title, st.custom.name) } };
       });
       if (data.imageData) {
         try {
@@ -1564,8 +1662,8 @@ class Component extends DCLogic {
       customOpen: !!s.custom,
       draftTitle: s.custom && s.custom.url ? 'add from link' : 'new custom tile',
       draftImgHint: s.custom && s.custom.fetching ? 'fetching image…' : 'click, drop, or paste (⌘V) a photo here',
-      openCustom: () => this.setState({ custom: { name: '', store: '', price: '', owned: true, folder: s.folder === 'All' ? 'Home' : s.folder, img: null, ar: null, tones: ['#eceae5', '#dcd8ce'] } }),
-      cancelCustom: () => this.setState({ custom: null }),
+      openCustom: () => this.setState({ tagCreatorOpen: false, custom: { name: '', store: '', price: '', owned: true, folder: s.folder === 'All' ? 'Home' : s.folder, img: null, ar: null, tones: ['#eceae5', '#dcd8ce'], tagIds: [], boardIds: [], notes: '' } }),
+      cancelCustom: () => this.setState({ custom: null, tagCreatorOpen: false }),
       pickDraftImage: () => { this.pendingImageItem = 'draft'; this.fileRef.current && this.fileRef.current.click(); },
       dropDraftImage: e => {
         e.preventDefault();
@@ -1593,23 +1691,57 @@ class Component extends DCLogic {
         color: s.custom && s.custom.folder === f ? '#f9f3ec' : '#7d6f63',
         pick: () => this.setState(st => ({ custom: { ...st.custom, folder: f } }))
       })),
+      draftNotes: s.custom ? (s.custom.notes || '') : '',
+      draftSetNotes: e => this.setState(st => ({ custom: { ...st.custom, notes: e.target.value } })),
+      draftNoBoards: s.boards.length === 0,
+      draftBoardList: s.custom ? s.boards.map(b => {
+        const on = (s.custom.boardIds || []).includes(b.id);
+        return {
+          name: b.name,
+          weight: on ? 700 : 500,
+          bg: on ? '#4a3f38' : '#f9f3ec',
+          color: on ? '#f9f3ec' : '#7d6f63',
+          dotBg: on ? accent : 'transparent',
+          ringColor: on ? accent : '#c9b8a4',
+          mark: on ? '✓' : '',
+          toggle: () => this.setState(st => ({ custom: { ...st.custom, boardIds: on ? (st.custom.boardIds || []).filter(id => id !== b.id) : [...(st.custom.boardIds || []), b.id] } }))
+        };
+      }) : [],
+      draftTagList: s.custom ? s.tags.map(t => {
+        const on = (s.custom.tagIds || []).includes(t.id);
+        return {
+          label: t.name, dot: t.color,
+          weight: on ? 700 : 500,
+          bg: on ? t.color : '#f9f3ec',
+          color: on ? '#fff' : '#7d6f63',
+          toggle: () => this.setState(st => ({ custom: { ...st.custom, tagIds: on ? (st.custom.tagIds || []).filter(id => id !== t.id) : [...(st.custom.tagIds || []), t.id] } }))
+        };
+      }) : [],
       saveCustom: () => {
         const c = this.state.custom;
         if (!c) return;
         const price = parseFloat(String(c.price).replace(/[^0-9.]/g, ''));
-        this.setState(st => ({
-          custom: null,
-          nextId: st.nextId + 1,
-          items: [{
-            id: st.nextId,
-            name: c.name.trim() || 'untitled',
-            store: c.store.trim() || (c.owned ? 'already mine' : ''),
-            price: isNaN(price) ? null : price,
-            folder: c.folder, tones: c.tones, ar: c.ar, img: c.img,
-            span: 2, photo: 'add a photo', owned: c.owned,
-            ...(c.url ? { url: c.url } : {})
-          }, ...st.items]
-        }));
+        const boardIds = c.boardIds || [];
+        this.setState(st => {
+          const id = st.nextId;
+          return {
+            custom: null,
+            tagCreatorOpen: false,
+            nextId: st.nextId + 1,
+            items: [{
+              id,
+              name: c.name.trim() || 'untitled',
+              store: c.store.trim() || (c.owned ? 'already mine' : ''),
+              price: isNaN(price) ? null : price,
+              folder: c.folder, tones: c.tones, ar: c.ar, img: c.img,
+              span: 2, photo: 'add a photo', owned: c.owned,
+              tagIds: c.tagIds || [],
+              ...(c.notes && c.notes.trim() ? { notes: c.notes.trim() } : {}),
+              ...(c.url ? { url: c.url } : {})
+            }, ...st.items],
+            boards: st.boards.map(b => boardIds.includes(b.id) ? { ...b, itemIds: [...b.itemIds, id] } : b)
+          };
+        });
       },
       accent,
       accentSoft: accent + '26',
