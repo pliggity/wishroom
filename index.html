@@ -4,14 +4,51 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wishroom</title>
-<meta name="description" content="Your personal shopping wishlist and moodboard.">
+<meta name="description" content="A consumerism mind map — your personal shopping wishlist and moodboard.">
+<meta name="theme-color" content="#f9f3ec">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Wishroom">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%8D%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="manifest" href="./manifest.webmanifest">
 <style>
-html,body{margin:0;background:#f9f3ec}
+html,body{margin:0;background:#f9f3ec;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 #dc-loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font:14px/1 system-ui,sans-serif;color:#c9b9ab;letter-spacing:.04em}
 body:has(#dc-root) #dc-loading{display:none}
+
+/* ---- mobile mode ---- */
+@media (max-width:900px){
+  .wr-grid{grid-template-columns:repeat(3,1fr) !important}
+}
+@media (max-width:640px){
+  .wr-shell{padding:16px 14px 56px !important;gap:16px !important}
+  .wr-header{flex-direction:column !important;align-items:stretch !important;gap:12px !important}
+  .wr-actions{flex-wrap:wrap !important}
+  .wr-link-input{width:100% !important;flex:1 1 100% !important;order:-1}
+  .wr-grid{grid-template-columns:repeat(2,1fr) !important;gap:11px !important}
+  /* modals become bottom sheets */
+  .wr-overlay{padding:0 !important;align-items:flex-end !important}
+  .wr-modal{width:100% !important;max-width:100% !important;max-height:90vh !important;border-radius:20px 20px 0 0 !important}
+  .wr-view-modal{flex-direction:column !important;width:100% !important;max-width:100% !important;max-height:90vh !important;overflow:auto !important;border-radius:20px 20px 0 0 !important}
+  .wr-view-media{flex:none !important;min-height:0 !important;height:200px !important}
+  .wr-view-panel{width:100% !important;box-sizing:border-box}
+  .wr-login-card{width:auto !important;max-width:calc(100vw - 32px) !important}
+  .wr-board-list{grid-template-columns:1fr !important}
+  .wr-board-head{flex-wrap:wrap !important}
+  .wr-board-name{width:100% !important;flex:1 1 100% !important;order:1}
+  /* freeform board canvas is a desktop tool (mouse drag); on mobile keep it
+     from blowing out the page — scroll it horizontally within its own box */
+  .wr-board-canvas{overflow-x:auto !important;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  /* keep iOS from zooming in when an input gains focus */
+  .wr-shell input,.wr-shell textarea,.wr-modal input,.wr-modal textarea,.wr-view-panel input,.wr-view-panel textarea{font-size:16px !important}
+}
 </style>
 <script src="./support.js"></script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){})})}
+</script>
 </head>
 <body>
 <x-dc>
@@ -23,7 +60,7 @@ body:has(#dc-root) #dc-loading{display:none}
 <div style="min-height:100vh; background:#f9f3ec; color:#4a3f38; font-family:'Karla',sans-serif">
 <sc-if value="{{ !pat }}" hint-placeholder-val="{{ false }}">
   <div style="display:flex; align-items:center; justify-content:center; min-height:100vh">
-    <div style="background:#fff; border-radius:20px; padding:40px 36px; width:340px; box-shadow:0 12px 48px rgba(60,40,20,.13); display:flex; flex-direction:column; gap:20px; align-items:center; text-align:center">
+    <div class="wr-login-card" style="background:#fff; border-radius:20px; padding:40px 36px; width:340px; box-shadow:0 12px 48px rgba(60,40,20,.13); display:flex; flex-direction:column; gap:20px; align-items:center; text-align:center">
       <div style="display:flex; flex-direction:column; gap:6px; align-items:center">
         <div style="font-family:'DM Serif Display',serif; font-size:30px; color:#3d332c">wishroom <span style="color:#d9917f">✿</span></div>
         <div style="font-size:13px; color:#b3a294">a consumerism mind map</div>
@@ -44,13 +81,13 @@ body:has(#dc-root) #dc-loading{display:none}
   </div>
 </sc-if>
 <sc-if value="{{ !!pat }}" hint-placeholder-val="{{ true }}">
-<div style="max-width:1160px; margin:0 auto; padding:30px 40px 60px; display:flex; flex-direction:column; gap:24px">
+<div class="wr-shell" style="max-width:1160px; margin:0 auto; padding:30px 40px 60px; display:flex; flex-direction:column; gap:24px">
   <input type="file" accept="image/*" ref="{{ fileRef }}" onChange="{{ onFilePicked }}" style="display:none">
   <input type="file" accept="application/json" ref="{{ importRef }}" onChange="{{ onImportPicked }}" style="display:none">
 
   <sc-if value="{{ archiveOpen }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ closeArchive }}" style="position:fixed; inset:0; background:rgba(61,51,44,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
-      <div onClick="{{ stopClick }}" style="background:#fff; border-radius:20px; width:520px; max-height:80vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:14px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
+    <div onClick="{{ closeArchive }}" class="wr-overlay" style="position:fixed; inset:0; background:rgba(61,51,44,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
+      <div onClick="{{ stopClick }}" class="wr-modal" style="background:#fff; border-radius:20px; width:520px; max-height:80vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:14px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
         <div style="display:flex; align-items:center; gap:10px">
           <div style="font-family:'DM Serif Display',serif; font-size:21px; color:#3d332c; flex:1">archive</div>
           <div onClick="{{ closeArchive }}" style="cursor:pointer; width:28px; height:28px; border-radius:99px; background:#f9f3ec; color:#7d6f63; display:flex; align-items:center; justify-content:center; font-size:14px; user-select:none" style-hover="background:#f0e5d8">×</div>
@@ -77,8 +114,8 @@ body:has(#dc-root) #dc-loading{display:none}
   </sc-if>
 
   <sc-if value="{{ customOpen }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ cancelCustom }}" style="position:fixed; inset:0; background:rgba(61,51,44,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
-      <div onClick="{{ stopClick }}" style="background:#fff; border-radius:20px; width:440px; max-height:86vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:16px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
+    <div onClick="{{ cancelCustom }}" class="wr-overlay" style="position:fixed; inset:0; background:rgba(61,51,44,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
+      <div onClick="{{ stopClick }}" class="wr-modal" style="background:#fff; border-radius:20px; width:440px; max-height:86vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:16px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
         <div style="font-family:'DM Serif Display',serif; font-size:21px; color:#3d332c">{{ draftTitle }}</div>
         <div onClick="{{ pickDraftImage }}" onDragOver="{{ dragOver }}" onDrop="{{ dropDraftImage }}" style="cursor:pointer; height:190px; border-radius:12px; background:{{ draftBg }}; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center" style-hover="filter:brightness(.97)">
           <sc-if value="{{ draftHasImg }}" hint-placeholder-val="{{ false }}">
@@ -117,9 +154,9 @@ body:has(#dc-root) #dc-loading{display:none}
   </sc-if>
 
   <sc-if value="{{ viewOpen }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ closeView }}" style="position:fixed; inset:0; background:rgba(61,51,44,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
-      <div onClick="{{ stopClick }}" style="background:#fff; border-radius:20px; max-width:900px; width:100%; max-height:86vh; display:flex; overflow:hidden; box-shadow:0 24px 70px rgba(40,30,20,.35)">
-        <div style="flex:1.3; min-width:0; background:{{ viewBg }}; position:relative; min-height:460px">
+    <div onClick="{{ closeView }}" class="wr-overlay" style="position:fixed; inset:0; background:rgba(61,51,44,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
+      <div onClick="{{ stopClick }}" class="wr-view-modal" style="background:#fff; border-radius:20px; max-width:900px; width:100%; max-height:86vh; display:flex; overflow:hidden; box-shadow:0 24px 70px rgba(40,30,20,.35)">
+        <div class="wr-view-media" style="flex:1.3; min-width:0; background:{{ viewBg }}; position:relative; min-height:460px">
           <sc-if value="{{ viewHasImg }}" hint-placeholder-val="{{ false }}">
             <div style="{{ viewImgCss }}"></div>
           </sc-if>
@@ -127,7 +164,7 @@ body:has(#dc-root) #dc-loading{display:none}
             <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:ui-monospace,monospace; font-size:11px; color:#a4917f">no photo yet — drop one on the tile</div>
           </sc-if>
         </div>
-        <div style="width:320px; flex:none; padding:26px 26px 22px; display:flex; flex-direction:column; gap:16px; overflow:auto">
+        <div class="wr-view-panel" style="width:320px; flex:none; padding:26px 26px 22px; display:flex; flex-direction:column; gap:16px; overflow:auto">
           <div style="display:flex; align-items:flex-start; gap:10px">
             <div style="flex:1; display:flex; flex-direction:column; gap:4px">
               <span style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.12em; color:#b3a294">TILE DESCRIPTION</span>
@@ -203,7 +240,7 @@ body:has(#dc-root) #dc-loading{display:none}
   </sc-if>
 
   <!-- header -->
-  <div style="display:flex; align-items:center; justify-content:space-between; gap:20px">
+  <div class="wr-header" style="display:flex; align-items:center; justify-content:space-between; gap:20px">
     <div style="display:flex; align-items:center; gap:12px; flex:none">
       <div style="font-family:'DM Serif Display',serif; font-size:27px; color:#3d332c">wishroom <span style="color:{{ accent }}">✿</span></div>
       <sc-if value="{{ syncing }}" hint-placeholder-val="{{ false }}">
@@ -213,8 +250,8 @@ body:has(#dc-root) #dc-loading{display:none}
         <span style="font-size:11px; color:#c0392b; font-style:italic">{{ saveErrorMsg }}</span>
       </sc-if>
     </div>
-    <div style="display:flex; gap:10px; align-items:center">
-      <input value="{{ link }}" onChange="{{ onLinkChange }}" onKeyDown="{{ onLinkKey }}" placeholder="Paste a shop link…" style="font-family:'Karla',sans-serif; font-size:13px; color:#4a3f38; background:#fff; border:none; outline:none; border-radius:999px; padding:11px 18px; width:250px; min-width:120px; flex-shrink:1; box-shadow:0 1px 3px rgba(90,70,50,.07)">
+    <div class="wr-actions" style="display:flex; gap:10px; align-items:center">
+      <input value="{{ link }}" onChange="{{ onLinkChange }}" onKeyDown="{{ onLinkKey }}" placeholder="Paste a shop link…" class="wr-link-input" style="font-family:'Karla',sans-serif; font-size:13px; color:#4a3f38; background:#fff; border:none; outline:none; border-radius:999px; padding:11px 18px; width:250px; min-width:120px; flex-shrink:1; box-shadow:0 1px 3px rgba(90,70,50,.07)">
       <div onClick="{{ saveLink }}" style="cursor:pointer; font-size:13px; font-weight:700; background:{{ accent }}; color:#fff; padding:11px 20px; border-radius:999px; user-select:none" style-hover="filter:brightness(1.06)">Save it</div>
       <div onClick="{{ openCustom }}" title="add anything — including things you already own, no link needed" style="cursor:pointer; white-space:nowrap; flex:none; font-size:13px; font-weight:700; background:#fff; color:#7d6f63; padding:11px 18px; border-radius:999px; user-select:none; box-shadow:0 1px 3px rgba(90,70,50,.07)" style-hover="color:#4a3f38">+ custom tile</div>
     </div>
@@ -253,7 +290,7 @@ body:has(#dc-root) #dc-loading{display:none}
       </div>
     </sc-if>
 
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; align-items:start">
+    <div class="wr-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; align-items:start">
       <sc-for list="{{ items }}" as="item" hint-placeholder-count="8">
         <div style="background:#fff; border-radius:14px; padding:8px; display:flex; flex-direction:column; gap:7px; animation:wrFade .25s ease" style-hover="box-shadow:0 6px 18px rgba(90,70,50,.10); transform:translateY(-2px)">
           <div onClick="{{ item.pickImage }}" onDragOver="{{ dragOver }}" onDrop="{{ item.drop }}" onMouseEnter="{{ item.hover }}" title="drop, paste, or click to add a photo" style="cursor:pointer; height:{{ item.photoH }}; aspect-ratio:{{ item.photoAr }}; border-radius:12px; background:{{ item.photoBg }}; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden">
@@ -291,7 +328,7 @@ body:has(#dc-root) #dc-loading{display:none}
         <span style="font-family:'DM Serif Display',serif; font-size:20px; color:#3d332c">Your boards</span>
         <span style="font-size:11.5px; color:#b3a294">mix items into a vibe — each board keeps its own palette</span>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px">
+      <div class="wr-board-list" style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px">
         <sc-for list="{{ boards }}" as="b" hint-placeholder-count="2">
           <div onClick="{{ b.open }}" style="cursor:pointer; background:#fff; border-radius:18px; padding:12px; display:flex; gap:12px; align-items:center; user-select:none" style-hover="box-shadow:0 6px 18px rgba(90,70,50,.10); transform:translateY(-2px)">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; width:84px; flex:none">
@@ -320,9 +357,9 @@ body:has(#dc-root) #dc-loading{display:none}
   <sc-if value="{{ inBoard }}" hint-placeholder-val="{{ false }}">
   <div style="display:flex; flex-direction:column; gap:16px; animation:wrFade .25s ease">
 
-    <div style="display:flex; align-items:center; gap:14px">
+    <div class="wr-board-head" style="display:flex; align-items:center; gap:14px">
       <div onClick="{{ closeBoard }}" style="cursor:pointer; font-size:13px; font-weight:700; background:#fff; padding:9px 15px; border-radius:999px; user-select:none; box-shadow:0 1px 3px rgba(90,70,50,.07)" style-hover="transform:translateX(-2px)">← library</div>
-      <input value="{{ boardName }}" onChange="{{ renameBoard }}" title="click to rename" style="font-family:'DM Serif Display',serif; font-size:24px; color:#3d332c; background:transparent; border:none; outline:none; border-bottom:1.5px dashed transparent; padding:0 2px; min-width:60px; width:320px" style-focus="border-bottom:1.5px dashed #dcc9bd">
+      <input value="{{ boardName }}" onChange="{{ renameBoard }}" title="click to rename" class="wr-board-name" style="font-family:'DM Serif Display',serif; font-size:24px; color:#3d332c; background:transparent; border:none; outline:none; border-bottom:1.5px dashed transparent; padding:0 2px; min-width:60px; width:320px" style-focus="border-bottom:1.5px dashed #dcc9bd">
       <div style="font-size:12px; color:#b3a294">{{ boardMeta }}</div>
       <div style="margin-left:auto; display:flex; align-items:center; gap:8px">
         <div onClick="{{ toggleGridEdit }}" title="drag to reorder tiles, drag corner handle to resize" style="cursor:pointer; font-size:12.5px; font-weight:700; background:{{ gridEditBg }}; color:{{ gridEditColor }}; padding:10px 16px; border-radius:999px; user-select:none">{{ gridEditLabel }}</div>
@@ -424,7 +461,7 @@ body:has(#dc-root) #dc-loading{display:none}
       <div onClick="{{ openTray }}" style="cursor:pointer; border:1.5px dashed #dcc9bd; border-radius:18px; min-height:220px; display:flex; align-items:center; justify-content:center; font-size:13.5px; color:{{ accentDeep }}; font-weight:700; user-select:none" style-hover="background:rgba(255,255,255,.6)">+ add your first items</div>
     </sc-if>
 
-    <div style="position:relative; width:100%; height:{{ canvasHeight }}px; min-height:220px">
+    <div class="wr-board-canvas" style="position:relative; width:100%; height:{{ canvasHeight }}px; min-height:220px">
       <sc-for list="{{ boardItems }}" as="it" hint-placeholder-count="5">
         <div style="position:absolute; left:{{ it.xPx }}px; top:{{ it.yPx }}px; width:{{ it.wPx }}px; background:#fff; border-radius:14px; padding:8px; display:flex; flex-direction:column; gap:7px; box-shadow:{{ it.shadow }}; z-index:{{ it.z }}; transition:box-shadow .15s ease">
           <div style="width:100%; height:{{ it.hPx }}px; border-radius:9px; background:{{ it.photoBg }}; position:relative; overflow:hidden; outline:{{ it.editOutline }}; outline-offset:-2px">
