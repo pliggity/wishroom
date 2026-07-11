@@ -209,6 +209,9 @@ body:has(#dc-root) #dc-loading{display:none}
       <sc-if value="{{ syncing }}" hint-placeholder-val="{{ false }}">
         <span style="font-size:11px; color:#b3a294; font-style:italic">saving…</span>
       </sc-if>
+      <sc-if value="{{ saveErrorMsg }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size:11px; color:#c0392b; font-style:italic">{{ saveErrorMsg }}</span>
+      </sc-if>
     </div>
     <div style="display:flex; gap:10px; align-items:center">
       <input value="{{ link }}" onChange="{{ onLinkChange }}" onKeyDown="{{ onLinkKey }}" placeholder="Paste a shop link…" style="font-family:'Karla',sans-serif; font-size:13px; color:#4a3f38; background:#fff; border:none; outline:none; border-radius:999px; padding:11px 18px; width:250px; min-width:120px; flex-shrink:1; box-shadow:0 1px 3px rgba(90,70,50,.07)">
@@ -489,6 +492,7 @@ class Component extends DCLogic {
     authLoading: false,
     ghSha: null,
     syncing: false,
+    saveError: null,
     folder: 'Home',
     boardId: null,
     trayOpen: false,
@@ -947,8 +951,8 @@ class Component extends DCLogic {
   async loadFromGitHub(pat) {
     this._loaded = false;
     try {
-      const res = await fetch('https://api.github.com/repos/pliggity/wishroom/contents/data.json', {
-        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+      const res = await fetch(`https://api.github.com/repos/pliggity/wishroom/contents/data.json?t=${Date.now()}`, {
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json', 'Cache-Control': 'no-cache' }
       });
       if (!res.ok) {
         this.setState({ patError: res.status === 401 ? 'Invalid token.' : `GitHub error ${res.status}.` });
@@ -991,12 +995,15 @@ class Component extends DCLogic {
       });
       if (res.ok) {
         const result = await res.json();
-        this.setState({ syncing: false, ghSha: result.content.sha });
+        this.setState({ syncing: false, saveError: null, ghSha: result.content.sha });
       } else {
-        this.setState({ syncing: false });
+        const errBody = await res.json().catch(() => ({}));
+        console.error('wishroom save failed', res.status, errBody);
+        this.setState({ syncing: false, saveError: `save failed (${res.status})` });
       }
-    } catch {
-      this.setState({ syncing: false });
+    } catch (e) {
+      console.error('wishroom save error', e);
+      this.setState({ syncing: false, saveError: 'save failed' });
     }
   }
 
@@ -1546,6 +1553,7 @@ class Component extends DCLogic {
       patError: s.patError,
       authLoading: s.authLoading,
       syncing: s.syncing,
+      saveErrorMsg: s.saveError || '',
       githubAuthUrl: 'https://github.com/login/oauth/authorize?client_id=Ov23lijpZJuBnpW8mbVl&scope=public_repo',
       signOut: () => this.signOut()
     };
