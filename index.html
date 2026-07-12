@@ -1140,14 +1140,14 @@ class Component extends DCLogic {
     const params = new URLSearchParams(window.location.search);
     const add = params.get('add');
     if (add) {
-      sessionStorage.setItem('wishroom-pending-add', add);
+      sessionStorage.setItem('vignette-pending-add', add);
       history.replaceState({}, '', window.location.pathname);
     }
     const code = params.get('code');
     if (code) {
       const returnedState = params.get('state');
-      const savedState = sessionStorage.getItem('wishroom-oauth-state');
-      sessionStorage.removeItem('wishroom-oauth-state');
+      const savedState = sessionStorage.getItem('vignette-oauth-state');
+      sessionStorage.removeItem('vignette-oauth-state');
       history.replaceState({}, '', window.location.pathname);
       if (!savedState || returnedState !== savedState) {
         this.setState({ patError: 'Sign-in could not be verified — please try again.' });
@@ -1156,16 +1156,24 @@ class Component extends DCLogic {
       this.exchangeCode(code);
       return;
     }
-    const stored = localStorage.getItem('wishroom-pat');
+    // one-time migration from the old wishroom-* token key so existing
+    // sessions survive the rename without a forced re-login
+    const legacy = localStorage.getItem('wishroom-pat');
+    if (legacy && !localStorage.getItem('vignette-pat')) {
+      localStorage.setItem('vignette-pat', legacy);
+      localStorage.removeItem('wishroom-pat');
+    }
+    localStorage.removeItem('wishroom-state-v1'); // stale prototype cache, unused
+    const stored = localStorage.getItem('vignette-pat');
     if (stored) this.loadFromGitHub(stored);
   }
 
   _oauthState() {
-    let s = sessionStorage.getItem('wishroom-oauth-state');
+    let s = sessionStorage.getItem('vignette-oauth-state');
     if (!s) {
       s = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
         : Math.random().toString(36).slice(2) + Date.now().toString(36);
-      sessionStorage.setItem('wishroom-oauth-state', s);
+      sessionStorage.setItem('vignette-oauth-state', s);
     }
     return s;
   }
@@ -1173,7 +1181,7 @@ class Component extends DCLogic {
   async exchangeCode(code) {
     this.setState({ authLoading: true, patError: null });
     try {
-      const res = await fetch('https://wishroom-oauth.pliggity.workers.dev', {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code })
       });
@@ -1215,14 +1223,14 @@ class Component extends DCLogic {
         headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
       });
       if (!res.ok) {
-        if (res.status === 401 || res.status === 403) localStorage.removeItem('wishroom-pat');
+        if (res.status === 401 || res.status === 403) localStorage.removeItem('vignette-pat');
         this.setState({ pat: null, authLoading: false, patError: res.status === 401 ? 'Session expired — sign in again.' : `GitHub error ${res.status}.` });
         return;
       }
       const file = await res.json();
       const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
       const data = JSON.parse(json);
-      localStorage.setItem('wishroom-pat', pat);
+      localStorage.setItem('vignette-pat', pat);
       const patch = { pat, ghSha: file.sha, patError: null };
       if (data && Array.isArray(data.items) && Array.isArray(data.boards)) {
         // migrate legacy folder -> scene
@@ -1239,8 +1247,8 @@ class Component extends DCLogic {
       }
       this.setState(patch, () => {
         this._loaded = true; this._snapshotData(); this.reprocessImages(); this.migrateImages();
-        const pendingAdd = sessionStorage.getItem('wishroom-pending-add');
-        if (pendingAdd) { sessionStorage.removeItem('wishroom-pending-add'); this.addFromLink(pendingAdd); }
+        const pendingAdd = sessionStorage.getItem('vignette-pending-add');
+        if (pendingAdd) { sessionStorage.removeItem('vignette-pending-add'); this.addFromLink(pendingAdd); }
       });
     } catch (e) {
       this.setState({ patError: 'Failed to connect to GitHub.', authLoading: false });
@@ -1288,7 +1296,7 @@ class Component extends DCLogic {
   }
 
   signOut() {
-    localStorage.removeItem('wishroom-pat');
+    localStorage.removeItem('vignette-pat');
     this.setState({ pat: null, ghSha: null, patError: null, authLoading: false });
   }
 
@@ -1458,7 +1466,7 @@ class Component extends DCLogic {
 
   async fetchLinkMeta(url) {
     try {
-      const res = await fetch('https://wishroom-oauth.pliggity.workers.dev/fetch-meta', {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev/fetch-meta', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.state.pat}` },
         body: JSON.stringify({ url })
