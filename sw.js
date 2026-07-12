@@ -1,7 +1,7 @@
 // Wishroom service worker — network-first so the app is never stale, with a
 // same-origin cache fallback for offline. Cross-origin requests (GitHub API,
 // the OAuth worker, release images, fonts) are never intercepted.
-const CACHE = 'wishroom-v1';
+const CACHE = 'vignette-v1';
 const SHELL = ['./', './index.html', './support.js', './icon-192.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

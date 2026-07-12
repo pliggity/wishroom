@@ -972,7 +972,7 @@ class Component extends DCLogic {
   async getImagesReleaseId() {
     if (this._imagesReleaseId) return this._imagesReleaseId;
     const { pat } = this.state;
-    const res = await fetch('https://api.github.com/repos/pliggity/wishroom/releases/tags/images', {
+    const res = await fetch('https://api.github.com/repos/pliggity/vignette/releases/tags/images', {
       headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
     });
     if (!res.ok) throw new Error('no images release');
@@ -984,7 +984,7 @@ class Component extends DCLogic {
   async uploadImage(blob) {
     const releaseId = await this.getImagesReleaseId();
     const name = `img-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-    const res = await fetch(`https://uploads.github.com/repos/pliggity/wishroom/releases/${releaseId}/assets?name=${encodeURIComponent(name)}`, {
+    const res = await fetch(`https://uploads.github.com/repos/pliggity/vignette/releases/${releaseId}/assets?name=${encodeURIComponent(name)}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.state.pat}`, Accept: 'application/vnd.github+json', 'Content-Type': 'image/jpeg' },
       body: blob
@@ -1127,7 +1127,7 @@ class Component extends DCLogic {
     const { pat, ghSha } = this.state;
     if (!pat || !ghSha) return;
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(this._saveData()))));
-    fetch('https://api.github.com/repos/pliggity/wishroom/contents/data.json', {
+    fetch('https://api.github.com/repos/pliggity/vignette/contents/data.json', {
       method: 'PUT', keepalive: true,
       headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: 'update vignette', content: encoded, sha: ghSha })
@@ -1211,7 +1211,7 @@ class Component extends DCLogic {
   async loadFromGitHub(pat) {
     this._loaded = false;
     try {
-      const res = await fetch(`https://api.github.com/repos/pliggity/wishroom/contents/data.json?t=${Date.now()}`, {
+      const res = await fetch(`https://api.github.com/repos/pliggity/vignette/contents/data.json?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
       });
       if (!res.ok) {
@@ -1266,7 +1266,7 @@ class Component extends DCLogic {
     const pat = this.state.pat;
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(this._saveData()))));
     this.setState({ syncing: true });
-    const res = await fetch('https://api.github.com/repos/pliggity/wishroom/contents/data.json', {
+    const res = await fetch('https://api.github.com/repos/pliggity/vignette/contents/data.json', {
       method: 'PUT',
       headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: 'update vignette', content: encoded, sha: this.state.ghSha })
@@ -1277,7 +1277,7 @@ class Component extends DCLogic {
       return;
     }
     if (res.status === 409 && !isRetry) {
-      const fresh = await fetch(`https://api.github.com/repos/pliggity/wishroom/contents/data.json?t=${Date.now()}`, {
+      const fresh = await fetch(`https://api.github.com/repos/pliggity/vignette/contents/data.json?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
       }).then(r => r.ok ? r.json() : null).catch(() => null);
       if (fresh && fresh.sha) { this.setState({ ghSha: fresh.sha }); return this._putData(true); }
