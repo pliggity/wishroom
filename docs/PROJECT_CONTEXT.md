@@ -248,3 +248,44 @@ Known open items / TODO:
   with an explicit `https://pliggity:$TOKEN@…` URL, not a baked-in credential.)
 - After changing `index.html`, GitHub Pages takes ~30s to rebuild; hard-refresh
   (Cmd/Ctrl+Shift+R) to bypass the service worker cache.
+
+---
+
+## Operational quickstart (for a fresh session)
+
+Repos on disk: **app = `~/vignette`** (GitHub `pliggity/vignette`), **worker =
+`~/vignette-oauth`** (Cloudflare `vignette-oauth`). The GitHub token is in 1Password.
+
+**Deploy an app change** (edit `~/vignette/index.html` etc., then):
+```bash
+cd ~/vignette && git add -A && git commit -m "…"
+TOKEN=$(op read "op://Private/Github_token_pliggity/credential")
+git push "https://pliggity:$TOKEN@github.com/pliggity/vignette.git" main
+# GitHub Pages rebuilds in ~30s; the app auto-commits to data.json a lot, so a
+# pull --rebase before push is often needed:
+#   git pull "https://pliggity:$TOKEN@github.com/pliggity/vignette.git" main --rebase
+```
+
+**Deploy a worker change** (edit `~/vignette-oauth/src/index.js`, then):
+```bash
+cd ~/vignette-oauth && npx wrangler deploy
+```
+Worker secrets (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`) come from 1Password item
+`Wishroom Oauth (Github)`; set via `op item get … --format json | … | npx wrangler secret put NAME`.
+
+**Verify live:** `curl -s https://pliggity.github.io/vignette/ | grep …`, and the
+worker: `curl -s -o /dev/null -w '%{http_code}' -X POST https://vignette-oauth.pliggity.workers.dev/fetch-meta -d '{}'` → **401** means the SSRF gate is up.
+
+**Editing the inline React class:** `index.html` is one big file — the template
+(`<x-dc>…</x-dc>`) then the `class Component extends DCLogic` in a `<script
+type="text/x-dc">`. To sanity-check JS after edits, extract the class body and
+`node --check` it with `const React={createRef:()=>({})};class DCLogic{setState(){}}`
+stubbed on top. Remember: **no `prevState` in `componentDidUpdate`** (see Gotchas).
+
+## Where we left off (2026-07-12)
+
+Everything above is **done, deployed, and verified**: the Vignette rebrand, the
+scenes/vignettes data model + migration, the full repo/URL rename, and the
+worker/key/folder rename sweep. Sign-in works via the updated OAuth callback.
+Open threads are the four **TODO** bullets above (iOS Shortcut, data.json size
+check, optional Capacitor native app, and removing the migration shim later).
