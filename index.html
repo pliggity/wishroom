@@ -661,6 +661,7 @@ class Component extends DCLogic {
     tagDraft: { name: '', color: '#9CAE9F' },
     confirmingDeleteBoard: false,
     gridEditOpen: false,
+    activeTileId: null,
     boardZoom: 1,
     link: '',
     nextId: 100,
@@ -693,7 +694,6 @@ class Component extends DCLogic {
   importRef = React.createRef();
   tagColorRef = React.createRef();
   boardViewportRef = React.createRef();
-  activeTileId = null;
   CANVAS_W = 1040;
   GAP = 14;
   CAP_H = 34; // caption strip below each photo, counted for spacing/collision
@@ -875,7 +875,11 @@ class Component extends DCLogic {
     const maxY = Math.max(0, this.boardMaxH(board) - start.h);
     let lastGood = { ...start };
     let curY = sy, scrollAdjust = 0;
-    if (tile) { tile.style.zIndex = '30'; tile.style.transition = 'none'; tile.style.boxShadow = '0 12px 30px rgba(35,35,38,.28)'; }
+    // Lift/shadow the tile via real state (not a direct DOM style write) so it
+    // renders through React's own diffing — a direct style.boxShadow write here
+    // got stuck forever, since React only re-applies a style when its computed
+    // value actually changes between renders, and activeTileId never used to.
+    if (this.state.activeTileId !== itemId) this.setState({ activeTileId: itemId });
     try { handle.setPointerCapture(pointerId); } catch (e2) {}
     const reposition = (clientX, clientY) => {
       const nx = Math.min(maxX, Math.max(0, Math.round(start.x + (clientX - sx) / zoom)));
@@ -921,7 +925,7 @@ class Component extends DCLogic {
     const maxW = Math.min(640, this.CANVAS_W - start.x);
     let lastGood = { ...start };
     let curY = sy, scrollAdjust = 0, lastClientX = sx;
-    if (tile) { tile.style.zIndex = '30'; tile.style.transition = 'none'; tile.style.boxShadow = '0 12px 30px rgba(35,35,38,.28)'; }
+    if (this.state.activeTileId !== itemId) this.setState({ activeTileId: itemId });
     try { handle.setPointerCapture(pointerId); } catch (e2) {}
     const reposition = (clientX, clientY) => {
       const w = Math.min(maxW, Math.max(110, Math.round(start.w + (clientX - sx) / zoom)));
@@ -1697,7 +1701,7 @@ class Component extends DCLogic {
         meta: its.length + ' items · $' + total.toLocaleString(),
         cover,
         palette: this.effPalette(b, its),
-        open: () => this.setState({ boardId: b.id, trayOpen: false, paletteOpen: false, confirmingDeleteBoard: false, gridEditOpen: false }, () => this.fitBoard())
+        open: () => this.setState({ boardId: b.id, trayOpen: false, paletteOpen: false, confirmingDeleteBoard: false, gridEditOpen: false, activeTileId: null }, () => this.fitBoard())
       };
     });
 
@@ -1746,8 +1750,8 @@ class Component extends DCLogic {
           yPx: r.y,
           wPx: r.w,
           hPx: r.h,
-          z: this.activeTileId === i.id ? 20 : (s.gridEditOpen ? 2 : 1),
-          shadow: this.activeTileId === i.id ? '0 12px 30px rgba(35,35,38,.28)' : '0 1px 3px rgba(35,35,38,.07)',
+          z: s.activeTileId === i.id ? 20 : (s.gridEditOpen ? 2 : 1),
+          shadow: s.activeTileId === i.id ? '0 12px 30px rgba(35,35,38,.28)' : '0 1px 3px rgba(35,35,38,.07)',
           photoBg: i.img ? i.tones[0] : this.stripe(i.tones),
           hasTags: (i.tagIds || []).length > 0,
           tagDots: (i.tagIds || []).map(tid => tagById[tid] && tagById[tid].color).filter(Boolean),
@@ -2099,7 +2103,7 @@ class Component extends DCLogic {
       trayColor: s.trayOpen ? '#fff' : '#232326',
       toggleTray: () => this.setState(st => ({ trayOpen: !st.trayOpen })),
       openTray: () => this.setState({ trayOpen: true }),
-      closeBoard: () => this.setState({ boardId: null, trayOpen: false, paletteOpen: false, gridEditOpen: false, boardZoom: 1 }),
+      closeBoard: () => this.setState({ boardId: null, trayOpen: false, paletteOpen: false, gridEditOpen: false, activeTileId: null, boardZoom: 1 }),
       confirmingDelete: s.confirmingDeleteBoard,
       notConfirmingDelete: !s.confirmingDeleteBoard,
       askDeleteBoard: () => this.setState({ confirmingDeleteBoard: true }),
@@ -2114,7 +2118,7 @@ class Component extends DCLogic {
       gridEditColor: s.gridEditOpen ? '#fff' : '#232326',
       toggleGridEdit: () => {
         const opening = !this.state.gridEditOpen;
-        this.setState({ gridEditOpen: opening }, () => {
+        this.setState({ gridEditOpen: opening, ...(opening ? {} : { activeTileId: null }) }, () => {
           if (!opening) this.fitBoard();
         });
       },
