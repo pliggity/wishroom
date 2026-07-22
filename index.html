@@ -47,7 +47,7 @@ body{margin:0;background:#F7F7F5}
   .wr-view-modal{flex-direction:column !important;width:100% !important;max-width:100% !important;max-height:90vh !important;overflow:auto !important;border-radius:20px 20px 0 0 !important}
   .wr-view-media{flex:none !important;min-height:0 !important;height:200px !important}
   .wr-view-panel{width:100% !important;box-sizing:border-box}
-  .wr-board-list{grid-template-columns:1fr !important}
+  .wr-board-list{grid-template-columns:repeat(2,1fr) !important}
   .wr-board-head{flex-wrap:wrap !important}
   .wr-board-name{width:100% !important;flex:1 1 100% !important;order:1}
   .wr-board-viewport{overscroll-behavior:contain}
@@ -230,7 +230,7 @@ body{margin:0;background:#F7F7F5}
             <div style="display:flex; align-items:center; gap:8px">
               <input value="{{ viewUrl }}" onChange="{{ viewSetUrl }}" placeholder="paste a shop link…" style="flex:1; min-width:0; font-family:'Inter',sans-serif; font-style:italic; font-size:12.5px; color:#232326; background:#F7F7F5; border:none; outline:none; border-radius:8px; padding:8px 11px">
               <sc-if value="{{ viewHasUrl }}" hint-placeholder-val="{{ false }}">
-                <a href="{{ viewUrlHref }}" target="_blank" rel="noopener" title="open link" style="flex:none; width:32px; height:32px; border-radius:8px; background:#fff; color:#232326; display:flex; align-items:center; justify-content:center; text-decoration:none; box-shadow:0 1px 3px rgba(35,35,38,.07)">↗</a>
+                <a href="{{ viewUrlHref }}" target="_blank" rel="noopener" title="open link" style="flex:none; width:32px; height:32px; border-radius:8px; background:#fff; color:#232326; display:flex; align-items:center; justify-content:center; text-decoration:none; box-shadow:0 1px 3px rgba(35,35,38,.07)"><svg width="11" height="11" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
               </sc-if>
             </div>
           </div>
@@ -409,7 +409,7 @@ body{margin:0;background:#F7F7F5}
             </sc-if>
             <div onClick="{{ item.inspect }}" title="inspect item" style="cursor:pointer; position:absolute; top:8px; left:8px; width:22px; height:22px; border-radius:99px; background:rgba(255,255,255,.9); display:flex; align-items:center; justify-content:center; user-select:none" style-hover="background:#fff; transform:scale(1.12)"><svg width="13" height="13" viewBox="0 0 24 16" fill="none"><path d="M1 8C1 8 5 1 12 1C19 1 23 8 23 8C23 8 19 15 12 15C5 15 1 8 1 8Z" stroke="#8A8681" stroke-width="1.4"></path><circle cx="12" cy="8" r="3.2" fill="#232326"></circle><path d="M3 4L1 1.5M8 1.8L7 -0.5M16 1.8L17 -0.5M21 4L23 1.5" stroke="#232326" stroke-width="1.2" stroke-linecap="round"></path></svg></div>
             <sc-if value="{{ item.hasUrl }}" hint-placeholder-val="{{ false }}">
-              <a href="{{ item.urlHref }}" target="_blank" rel="noopener" title="open original link" style="text-decoration:none; position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:99px; background:rgba(255,255,255,.9); color:#232326; display:flex; align-items:center; justify-content:center; font-size:11px; user-select:none" style-hover="background:#fff; transform:scale(1.12)">↗</a>
+              <a href="{{ item.urlHref }}" target="_blank" rel="noopener" title="open original link" style="text-decoration:none; position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:99px; background:rgba(255,255,255,.9); color:#232326; display:flex; align-items:center; justify-content:center; user-select:none" style-hover="background:#fff; transform:scale(1.12)"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
             </sc-if>
           </div>
           <div style="display:flex; align-items:center; gap:8px; padding:0 3px 2px">
@@ -580,7 +580,7 @@ body{margin:0;background:#F7F7F5}
                 <sc-if value="{{ it.showViewControls }}" hint-placeholder-val="{{ true }}">
                   <div onClick="{{ it.inspect }}" title="inspect item" style="cursor:pointer; position:absolute; top:8px; left:8px; width:22px; height:22px; border-radius:99px; background:rgba(255,255,255,.9); display:flex; align-items:center; justify-content:center; user-select:none" style-hover="background:#fff; transform:scale(1.12)"><svg width="13" height="13" viewBox="0 0 24 16" fill="none"><path d="M1 8C1 8 5 1 12 1C19 1 23 8 23 8C23 8 19 15 12 15C5 15 1 8 1 8Z" stroke="#8A8681" stroke-width="1.4"></path><circle cx="12" cy="8" r="3.2" fill="#232326"></circle><path d="M3 4L1 1.5M8 1.8L7 -0.5M16 1.8L17 -0.5M21 4L23 1.5" stroke="#232326" stroke-width="1.2" stroke-linecap="round"></path></svg></div>
                   <sc-if value="{{ it.hasUrl }}" hint-placeholder-val="{{ false }}">
-                    <a href="{{ it.urlHref }}" target="_blank" rel="noopener" title="open original link" style="text-decoration:none; position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:99px; background:rgba(255,255,255,.9); color:#232326; display:flex; align-items:center; justify-content:center; font-size:11px; user-select:none" style-hover="background:#fff; transform:scale(1.12)">↗</a>
+                    <a href="{{ it.urlHref }}" target="_blank" rel="noopener" title="open original link" style="text-decoration:none; position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:99px; background:rgba(255,255,255,.9); color:#232326; display:flex; align-items:center; justify-content:center; user-select:none" style-hover="background:#fff; transform:scale(1.12)"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
                   </sc-if>
                 </sc-if>
                 <sc-if value="{{ it.editing }}" hint-placeholder-val="{{ false }}">
