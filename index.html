@@ -737,6 +737,12 @@ class Component extends DCLogic {
   // finger down, keeping single-finger taps and drags from leaking state.
   startPinch(e) {
     if (e.pointerType !== 'touch') return;
+    // A touch that starts on a tile belongs entirely to startMove/startResize.
+    // Guard defensively (not just via stopPropagation) — if this ever ran
+    // anyway, setPointerCapture(viewport) would steal the pointer capture a
+    // tile drag already claimed, since the last setPointerCapture call for a
+    // given pointerId always wins, silently killing that drag's own listeners.
+    if (e.target.closest && e.target.closest('[data-tile]')) return;
     const viewport = e.currentTarget;
     if (!this._pinch) this._pinch = new Map();
     const firstDown = this._pinch.size === 0;
