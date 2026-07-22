@@ -1768,6 +1768,7 @@ class Component extends DCLogic {
           url: i.url || '',
           urlHref: this._safeLink(i.url),
           chip: (i.name + (i.price != null ? ' · $' + i.price : '')).toUpperCase(),
+          owned: !!i.owned,
           ownLabel: i.owned ? '✓' : '',
           ownBg: i.owned ? '#232326' : '#fff',
           ownRing: i.owned ? '#8A8681' : '#DBD8D3',
