@@ -1,4 +1,4 @@
-// Wishroom service worker — network-first so the app is never stale, with a
+// Vignette service worker — network-first so the app is never stale, with a
 // same-origin cache fallback for offline. Cross-origin requests (GitHub API,
 // the OAuth worker, release images, fonts) are never intercepted.
 const CACHE = 'vignette-v1';
