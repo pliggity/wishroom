@@ -573,7 +573,7 @@ body{margin:0;background:#F7F7F5}
         <div class="wr-board-canvas" style="position:absolute; top:0; left:0; width:{{ boardCanvasW }}px; height:{{ canvasHeight }}px; min-height:220px; transform:scale({{ boardZoom }}); transform-origin:top left">
           <sc-for list="{{ boardItems }}" as="it" hint-placeholder-count="5">
             <div data-tile="{{ it.id }}" style="position:absolute; left:{{ it.xPx }}px; top:{{ it.yPx }}px; width:{{ it.wPx }}px; background:#fff; border-radius:14px; padding:8px; display:flex; flex-direction:column; gap:7px; box-shadow:{{ it.shadow }}; z-index:{{ it.z }}; transition:box-shadow .15s ease">
-              <div style="width:100%; height:{{ it.hPx }}px; border-radius:9px; background:{{ it.photoBg }}; position:relative; overflow:hidden; outline:{{ it.editOutline }}; outline-offset:-2px">
+              <div onPointerDown="{{ it.moveStart }}" style="width:100%; height:{{ it.hPx }}px; border-radius:9px; background:{{ it.photoBg }}; position:relative; overflow:hidden; outline:{{ it.editOutline }}; outline-offset:-2px; cursor:{{ it.photoCursor }}; touch-action:{{ it.photoTouchAction }}">
                 <sc-if value="{{ it.hasImg }}" hint-placeholder-val="{{ false }}">
                   <div style="{{ it.imgCss }}"></div>
                 </sc-if>
@@ -584,7 +584,7 @@ body{margin:0;background:#F7F7F5}
                   </sc-if>
                 </sc-if>
                 <sc-if value="{{ it.editing }}" hint-placeholder-val="{{ false }}">
-                  <div onPointerDown="{{ it.moveStart }}" title="drag to move" style="position:absolute; top:8px; left:8px; width:28px; height:28px; border-radius:99px; background:rgba(35,35,38,.85); color:#f9f3ec; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:grab; user-select:none; touch-action:none">⠿</div>
+                  <div title="drag anywhere on the photo to move" style="position:absolute; top:8px; left:8px; width:28px; height:28px; border-radius:99px; background:rgba(35,35,38,.85); color:#f9f3ec; display:flex; align-items:center; justify-content:center; font-size:13px; user-select:none; pointer-events:none">⠿</div>
                   <div onPointerDown="{{ it.resizeStart }}" title="drag to resize" style="cursor:nwse-resize; position:absolute; bottom:0; right:0; width:28px; height:28px; border-radius:9px 0 9px 0; background:rgba(35,35,38,.85); display:flex; align-items:flex-end; justify-content:flex-end; padding:4px; user-select:none; touch-action:none">
                     <svg width="10" height="10" viewBox="0 0 10 10"><path d="M9 1L1 9M9 5L5 9" stroke="#f9f3ec" stroke-width="1.4" stroke-linecap="round"></path></svg>
                   </div>
@@ -702,9 +702,20 @@ class Component extends DCLogic {
   ZOOM_STEP = 0.1;
   TAG_PRESET_COLORS = ['#9CAE9F', '#B7ACD6', '#232326', '#A9A5D8', '#7E9184', '#9A9791'];
 
+  // Tallest current tile bottom (canvas-local px). Shared by the rendered
+  // canvas height and the drag/resize bounds so they never disagree — a tile
+  // can only be dragged as far down as the scrollable area actually reaches.
+  tileRectsBottom(board) {
+    if (!board) return 220;
+    const rects = this.tileRects(board);
+    let maxBottom = 220;
+    Object.values(rects).forEach(r => { maxBottom = Math.max(maxBottom, r.y + r.h + this.CAP_H); });
+    return maxBottom;
+  }
   boardMaxH(board) {
-    const n = board ? board.itemIds.length : 0;
-    return Math.max(700, n * 190);
+    // generous slack below the current stack so there's always room to drag
+    // or resize a tile further down, not just to the current bottom edge
+    return this.tileRectsBottom(board) + 400;
   }
   zoomBoardBy(delta) {
     this.setState(st => ({ boardZoom: Math.round(Math.min(this.MAX_ZOOM, Math.max(this.MIN_ZOOM, (st.boardZoom || 1) + delta)) * 100) / 100 }));
@@ -815,6 +826,35 @@ class Component extends DCLogic {
   // Drag via Pointer Events. Updates the tile's DOM directly during the drag
   // (no setState) so the element is never re-rendered mid-gesture — that would
   // break the pointer's implicit capture and freeze the drag on mobile.
+  // Auto-scrolls the board viewport when a drag/resize pointer nears its top
+  // or bottom edge, so a tile can be placed below the current fold on mobile
+  // where there's no room to also physically drag past the screen edge.
+  // Runs as a rAF loop for the whole gesture so it keeps scrolling even if the
+  // finger holds still right at the edge, not just when pointermove fires.
+  _autoScrollLoop(getY, onScrolled) {
+    const viewport = this.boardViewportRef.current;
+    const EDGE = 60, MAX_SPEED = 14;
+    let rafId = null;
+    const tick = () => {
+      if (viewport) {
+        const vr = viewport.getBoundingClientRect();
+        const y = getY();
+        let speed = 0;
+        if (y < vr.top + EDGE) speed = -MAX_SPEED * (1 - Math.max(0, y - vr.top) / EDGE);
+        else if (y > vr.bottom - EDGE) speed = MAX_SPEED * (1 - Math.max(0, vr.bottom - y) / EDGE);
+        if (speed) {
+          const before = viewport.scrollTop;
+          viewport.scrollTop = Math.max(0, Math.min(viewport.scrollHeight - viewport.clientHeight, before + speed));
+          const applied = viewport.scrollTop - before;
+          if (applied) onScrolled(applied);
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }
+
   startMove(boardId, itemId, e) {
     e.preventDefault();
     e.stopPropagation();
@@ -828,16 +868,28 @@ class Component extends DCLogic {
     const maxX = Math.max(0, this.CANVAS_W - start.w);
     const maxY = Math.max(0, this.boardMaxH(board) - start.h);
     let lastGood = { ...start };
+    let curY = sy, scrollAdjust = 0;
     if (tile) { tile.style.zIndex = '30'; tile.style.transition = 'none'; tile.style.boxShadow = '0 12px 30px rgba(35,35,38,.28)'; }
     try { handle.setPointerCapture(pointerId); } catch (e2) {}
-    const onMove = (ev) => {
-      const nx = Math.min(maxX, Math.max(0, Math.round(start.x + (ev.clientX - sx) / zoom)));
-      const ny = Math.min(maxY, Math.max(0, Math.round(start.y + (ev.clientY - sy) / zoom)));
+    const reposition = (clientX, clientY) => {
+      const nx = Math.min(maxX, Math.max(0, Math.round(start.x + (clientX - sx) / zoom)));
+      const ny = Math.min(maxY, Math.max(0, Math.round(start.y + (clientY - sy) / zoom + scrollAdjust / zoom)));
       if (tile) { tile.style.left = nx + 'px'; tile.style.top = ny + 'px'; }
       const cand = { x: nx, y: ny, w: start.w, h: start.h };
       if (!this.overlapsOther(cand, itemId, rects)) lastGood = cand;
+      return { nx, ny };
+    };
+    let lastClientX = sx;
+    const stopAutoScroll = this._autoScrollLoop(() => curY, applied => {
+      scrollAdjust += applied;
+      reposition(lastClientX, curY);
+    });
+    const onMove = (ev) => {
+      lastClientX = ev.clientX; curY = ev.clientY;
+      reposition(ev.clientX, ev.clientY);
     };
     const onUp = () => {
+      stopAutoScroll();
       handle.removeEventListener('pointermove', onMove);
       handle.removeEventListener('pointerup', onUp);
       handle.removeEventListener('pointercancel', onUp);
@@ -862,17 +914,27 @@ class Component extends DCLogic {
     const zoom = this.state.boardZoom || 1;
     const maxW = Math.min(640, this.CANVAS_W - start.x);
     let lastGood = { ...start };
+    let curY = sy, scrollAdjust = 0, lastClientX = sx;
     if (tile) { tile.style.zIndex = '30'; tile.style.transition = 'none'; tile.style.boxShadow = '0 12px 30px rgba(35,35,38,.28)'; }
     try { handle.setPointerCapture(pointerId); } catch (e2) {}
-    const onMove = (ev) => {
-      const w = Math.min(maxW, Math.max(110, Math.round(start.w + (ev.clientX - sx) / zoom)));
-      const h = Math.min(640, Math.max(90, Math.round(start.h + (ev.clientY - sy) / zoom)));
+    const reposition = (clientX, clientY) => {
+      const w = Math.min(maxW, Math.max(110, Math.round(start.w + (clientX - sx) / zoom)));
+      const h = Math.min(640, Math.max(90, Math.round(start.h + (clientY - sy) / zoom + scrollAdjust / zoom)));
       if (tile) tile.style.width = w + 'px';
       if (photo) photo.style.height = h + 'px';
       const cand = { x: start.x, y: start.y, w, h };
       if (!this.overlapsOther(cand, itemId, rects)) lastGood = cand;
     };
+    const stopAutoScroll = this._autoScrollLoop(() => curY, applied => {
+      scrollAdjust += applied;
+      reposition(lastClientX, curY);
+    });
+    const onMove = (ev) => {
+      lastClientX = ev.clientX; curY = ev.clientY;
+      reposition(ev.clientX, ev.clientY);
+    };
     const onUp = () => {
+      stopAutoScroll();
       handle.removeEventListener('pointermove', onMove);
       handle.removeEventListener('pointerup', onUp);
       handle.removeEventListener('pointercancel', onUp);
@@ -1666,9 +1728,10 @@ class Component extends DCLogic {
       }));
       boardEmpty = its.length === 0;
       const rects = this.tileRects(board);
-      let maxBottom = 220;
-      Object.values(rects).forEach(r => { maxBottom = Math.max(maxBottom, r.y + r.h + this.CAP_H); });
-      boardCanvasHeight = maxBottom + 24;
+      // edit mode reserves generous slack below the last tile (matches
+      // boardMaxH) so there's room to drag/resize a tile past the current
+      // bottom edge; view mode stays tight-fit to avoid empty scroll space
+      boardCanvasHeight = this.tileRectsBottom(board) + (s.gridEditOpen ? 400 : 24);
       boardItems = visibleIts.map((i, idx) => {
         const r = rects[i.id];
         return {
@@ -1685,7 +1748,9 @@ class Component extends DCLogic {
           editing: s.gridEditOpen,
           editOutline: s.gridEditOpen ? '2px dashed #dcc9bd' : 'none',
           showViewControls: !s.gridEditOpen,
-          moveStart: e => this.startMove(board.id, i.id, e),
+          photoCursor: s.gridEditOpen ? 'grab' : 'default',
+          photoTouchAction: s.gridEditOpen ? 'none' : 'auto',
+          moveStart: e => { if (s.gridEditOpen) this.startMove(board.id, i.id, e); },
           resizeStart: e => this.startResize(board.id, i.id, e),
           imgCss: this.imgCss(i, 'cover'),
           hasImg: !!i.img,
