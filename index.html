@@ -57,27 +57,50 @@ body{margin:0;background:#F7F7F5}
 </helmet>
 <div style="min-height:100vh; background:#F7F7F5; color:#232326; font-family:'Inter',sans-serif; position:relative">
 <div style="position:fixed; inset:0; pointer-events:none; z-index:40; box-shadow:inset 0 0 170px rgba(35,35,38,.34), inset 0 0 55px rgba(35,35,38,.14)"></div>
-<sc-if value="{{ !pat }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ !pat && !googleReady }}" hint-placeholder-val="{{ false }}">
   <div style="display:flex; align-items:center; justify-content:center; min-height:100vh">
-    <div class="wr-login-card" style="background:#fff; border-radius:12px; padding:44px 40px; width:330px; box-shadow:0 12px 48px rgba(35,35,38,.12); display:flex; flex-direction:column; gap:22px; align-items:center; text-align:center">
-      <div style="font-family:'Fraunces',serif; font-weight:250; font-size:34px; color:#232326; font-variation-settings:'opsz' 90; display:flex; align-items:baseline"><span style="font-weight:400; font-size:42px; font-variation-settings:'opsz' 144; margin-right:-3px">V</span><span style="position:relative; top:-1px">ignette</span></div>
-      <div style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#AFAAA5; margin-top:-10px">a personal shopping moodboard</div>
-      <sc-if value="{{ authLoading }}" hint-placeholder-val="{{ false }}">
-        <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:8px 0">signing in…</div>
-      </sc-if>
-      <sc-if value="{{ !authLoading }}" hint-placeholder-val="{{ true }}">
-        <sc-if value="{{ !!patError }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12px; color:#9A6B72">{{ patError }}</div>
+    <sc-if value="{{ googleIsNew }}" hint-placeholder-val="{{ false }}">
+      <div class="wr-login-card" style="background:#fff; border-radius:12px; padding:44px 40px; width:330px; box-shadow:0 12px 48px rgba(35,35,38,.12); display:flex; flex-direction:column; gap:18px; align-items:center; text-align:center">
+        <div style="font-family:'Fraunces',serif; font-weight:250; font-size:34px; color:#232326; font-variation-settings:'opsz' 90; display:flex; align-items:baseline"><span style="font-weight:400; font-size:42px; font-variation-settings:'opsz' 144; margin-right:-3px">V</span><span style="position:relative; top:-1px">ignette</span></div>
+        <div style="font-family:'Fraunces',serif; font-style:italic; font-size:15px; color:#232326">What should we call you?</div>
+        <div style="font-size:11.5px; color:#9B9793; margin-top:-8px">use your name or a username</div>
+        <sc-if value="{{ authLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:8px 0">saving…</div>
         </sc-if>
-        <a href="{{ githubAuthUrl }}" style="display:flex; align-items:center; justify-content:center; gap:10px; box-sizing:border-box; width:100%; background:#232326; color:#fff; text-decoration:none; padding:13px 20px; border:1px solid #232326; border-radius:2px; font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; user-select:none" style-hover="outline:1px solid #726F6C; outline-offset:-5px; font-family:'Fraunces',serif; font-style:italic; text-transform:none; letter-spacing:0; font-weight:400">
-          <svg viewBox="0 0 16 16" style="width:17px;height:17px;fill:currentColor;flex:none"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-          Sign in with GitHub
-        </a>
-      </sc-if>
-    </div>
+        <sc-if value="{{ !authLoading }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ !!patError }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px; color:#9A6B72">{{ patError }}</div>
+          </sc-if>
+          <input value="{{ googleNameDraft }}" onChange="{{ googleNameSetDraft }}" onKeyDown="{{ googleNameKey }}" placeholder="e.g. Amanda or a-manda" style="box-sizing:border-box; width:100%; font-family:'Inter',sans-serif; font-size:14px; color:#232326; background:#F7F7F5; border:none; outline:none; border-radius:8px; padding:12px 14px; text-align:center">
+          <div onClick="{{ googleNameSubmit }}" style="cursor:pointer; box-sizing:border-box; width:100%; background:#232326; color:#fff; padding:13px 20px; border-radius:2px; font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; user-select:none" style-hover="outline:1px solid #726F6C; outline-offset:-5px; font-family:'Fraunces',serif; font-style:italic; text-transform:none; letter-spacing:0; font-weight:400">Continue →</div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{ !googleIsNew }}" hint-placeholder-val="{{ true }}">
+      <div class="wr-login-card" style="background:#fff; border-radius:12px; padding:44px 40px; width:330px; box-shadow:0 12px 48px rgba(35,35,38,.12); display:flex; flex-direction:column; gap:22px; align-items:center; text-align:center">
+        <div style="font-family:'Fraunces',serif; font-weight:250; font-size:34px; color:#232326; font-variation-settings:'opsz' 90; display:flex; align-items:baseline"><span style="font-weight:400; font-size:42px; font-variation-settings:'opsz' 144; margin-right:-3px">V</span><span style="position:relative; top:-1px">ignette</span></div>
+        <div style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#AFAAA5; margin-top:-10px">a personal shopping moodboard</div>
+        <sc-if value="{{ authLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:8px 0">signing in…</div>
+        </sc-if>
+        <sc-if value="{{ !authLoading }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ !!patError }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px; color:#9A6B72">{{ patError }}</div>
+          </sc-if>
+          <a href="{{ githubAuthUrl }}" style="display:flex; align-items:center; justify-content:center; gap:10px; box-sizing:border-box; width:100%; background:#232326; color:#fff; text-decoration:none; padding:13px 20px; border:1px solid #232326; border-radius:2px; font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; user-select:none" style-hover="outline:1px solid #726F6C; outline-offset:-5px; font-family:'Fraunces',serif; font-style:italic; text-transform:none; letter-spacing:0; font-weight:400">
+            <svg viewBox="0 0 16 16" style="width:17px;height:17px;fill:currentColor;flex:none"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+            Sign in with GitHub
+          </a>
+          <a href="{{ googleAuthUrl }}" style="display:flex; align-items:center; justify-content:center; gap:10px; box-sizing:border-box; width:100%; background:#fff; color:#232326; text-decoration:none; padding:12px 20px; border:1px solid #DBD8D3; border-radius:2px; font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; user-select:none" style-hover="border-color:#232326; outline:1px solid #DBD8D3; outline-offset:-4px; font-family:'Fraunces',serif; font-style:italic; text-transform:none; letter-spacing:0; font-weight:400">
+            <svg viewBox="0 0 24 24" style="width:17px;height:17px;flex:none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Sign in with Google
+          </a>
+        </sc-if>
+      </div>
+    </sc-if>
   </div>
 </sc-if>
-<sc-if value="{{ !!pat }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ !!pat || googleReady }}" hint-placeholder-val="{{ true }}">
 <div class="wr-shell" style="max-width:1160px; margin:0 auto; padding:30px 40px 60px; display:flex; flex-direction:column; gap:24px">
   <input type="file" accept="image/*" ref="{{ fileRef }}" onChange="{{ onFilePicked }}" style="display:none">
   <input type="file" accept="application/json" ref="{{ importRef }}" onChange="{{ onImportPicked }}" style="display:none">
@@ -106,6 +129,86 @@ body{margin:0;background:#F7F7F5}
           <sc-if value="{{ archiveEmpty }}" hint-placeholder-val="{{ true }}">
             <span style="font-size:12.5px; color:#9B9793; padding:8px 2px">nothing archived</span>
           </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Manage Access modal (owner only) -->
+  <sc-if value="{{ manageAccessOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeManageAccess }}" class="wr-overlay" style="position:fixed; inset:0; background:rgba(35,35,38,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
+      <div onClick="{{ stopClick }}" class="wr-modal" style="background:#fff; border-radius:20px; width:480px; max-height:80vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:16px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
+        <div style="display:flex; align-items:center; gap:10px">
+          <div style="font-family:'Fraunces',serif; font-size:21px; color:#232326; flex:1">manage access</div>
+          <div onClick="{{ closeManageAccess }}" style="cursor:pointer; width:28px; height:28px; border-radius:99px; background:#F7F7F5; color:#726F6C; display:flex; align-items:center; justify-content:center; font-size:14px; user-select:none" style-hover="background:#EAE8E4">×</div>
+        </div>
+        <div style="font-size:12px; color:#9B9793">people on this list can sign in with Google and see Vignette in read-only mode with their own saved items.</div>
+        <sc-if value="{{ allowlistLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:4px 0">loading…</div>
+        </sc-if>
+        <div style="display:flex; flex-direction:column; gap:6px">
+          <sc-for list="{{ allowlistItems }}" as="al" hint-placeholder-count="2">
+            <div style="display:flex; align-items:center; gap:10px; background:#F7F7F5; border-radius:10px; padding:10px 12px">
+              <div style="flex:1; min-width:0">
+                <div style="font-size:13px; font-weight:600; color:#232326; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ al.label }}</div>
+              </div>
+              <div onClick="{{ al.remove }}" style="cursor:pointer; flex:none; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:#9A6B72; padding:6px 12px; border:1px solid #9A6B72; border-radius:2px; user-select:none" style-hover="background:#9A6B72; color:#fff">remove</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ allowlistEmpty }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12.5px; color:#9B9793; padding:4px 2px">no one on the list yet</span>
+          </sc-if>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <input value="{{ allowlistNewEmail }}" onChange="{{ allowlistSetNewEmail }}" placeholder="add email address…" style="flex:1; min-width:0; font-family:'Inter',sans-serif; font-size:13px; color:#232326; background:#F7F7F5; border:none; outline:none; border-radius:8px; padding:10px 13px">
+          <div onClick="{{ allowlistAdd }}" style="cursor:pointer; flex:none; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; background:transparent; color:#232326; padding:10px 16px; border:1px solid #232326; border-radius:2px; user-select:none" style-hover="background:#232326; color:#fff">add</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Change Requests view modal (owner only) -->
+  <sc-if value="{{ changeRequestsViewOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeChangeRequestsView }}" class="wr-overlay" style="position:fixed; inset:0; background:rgba(35,35,38,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
+      <div onClick="{{ stopClick }}" class="wr-modal" style="background:#fff; border-radius:20px; width:520px; max-height:80vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:14px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
+        <div style="display:flex; align-items:center; gap:10px">
+          <div style="font-family:'Fraunces',serif; font-size:21px; color:#232326; flex:1">change requests</div>
+          <div onClick="{{ closeChangeRequestsView }}" style="cursor:pointer; width:28px; height:28px; border-radius:99px; background:#F7F7F5; color:#726F6C; display:flex; align-items:center; justify-content:center; font-size:14px; user-select:none" style-hover="background:#EAE8E4">×</div>
+        </div>
+        <sc-if value="{{ changeRequestsLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:4px 0">loading…</div>
+        </sc-if>
+        <div style="display:flex; flex-direction:column; gap:10px">
+          <sc-for list="{{ changeRequestsList }}" as="cr" hint-placeholder-count="2">
+            <div style="display:flex; flex-direction:column; gap:6px; background:#F7F7F5; border-radius:12px; padding:12px">
+              <div style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; color:#9B9793">{{ cr.label }} · {{ cr.date }}</div>
+              <div style="font-size:13px; color:#232326; line-height:1.5">{{ cr.text }}</div>
+              <sc-if value="{{ cr.hasImage }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ cr.imageUrl }}" style="max-width:100%; border-radius:8px; margin-top:4px">
+              </sc-if>
+            </div>
+          </sc-for>
+          <sc-if value="{{ changeRequestsEmpty }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size:12.5px; color:#9B9793; padding:4px 2px">no requests yet</span>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Request a Change modal (guests only) -->
+  <sc-if value="{{ changeRequestOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeChangeRequest }}" class="wr-overlay" style="position:fixed; inset:0; background:rgba(35,35,38,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
+      <div onClick="{{ stopClick }}" class="wr-modal" style="background:#fff; border-radius:20px; width:440px; max-height:80vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:16px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
+        <div style="display:flex; align-items:center; gap:10px">
+          <div style="font-family:'Fraunces',serif; font-size:21px; color:#232326; flex:1">request a change</div>
+          <div onClick="{{ closeChangeRequest }}" style="cursor:pointer; width:28px; height:28px; border-radius:99px; background:#F7F7F5; color:#726F6C; display:flex; align-items:center; justify-content:center; font-size:14px; user-select:none" style-hover="background:#EAE8E4">×</div>
+        </div>
+        <div style="font-size:12px; color:#9B9793">describe what you'd like pliggity to add, change, or remove.</div>
+        <textarea value="{{ changeRequestText }}" onChange="{{ changeRequestSetText }}" placeholder="e.g. could we add a Lighting scene? I want to save some lamp ideas…" style="font-family:'Inter',sans-serif; font-size:13px; line-height:1.55; color:#232326; background:#F7F7F5; border:none; outline:none; border-radius:12px; padding:12px 14px; resize:none; min-height:100px"></textarea>
+        <div style="display:flex; gap:10px; margin-top:2px">
+          <div onClick="{{ submitChangeRequest }}" style="cursor:pointer; flex:1; text-align:center; font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; background:transparent; color:#232326; padding:12px 0; border:1px solid #232326; border-radius:2px; user-select:none" style-hover="background:#232326; color:#fff">{{ changeRequestSending ? 'sending…' : 'send request' }}</div>
+          <div onClick="{{ closeChangeRequest }}" style="cursor:pointer; font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:#9B9793; padding:12px 18px; border-radius:2px; user-select:none" style-hover="background:#F7F7F5">cancel</div>
         </div>
       </div>
     </div>
@@ -349,12 +452,20 @@ body{margin:0;background:#F7F7F5}
         <div onClick="{{ openSceneCreator }}" style="cursor:pointer; font-size:11.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:#9B9793; padding:9px 17px; border:1px dashed #DBD8D3; border-radius:2px; user-select:none" style-hover="box-shadow:inset 0 0 0 1px #DBD8D3; font-family:'Fraunces',serif; font-style:italic; text-transform:none; letter-spacing:0; font-weight:400">+ scene</div>
       </sc-if>
       <div style="margin-left:auto; display:flex; align-items:center; gap:16px">
-        <sc-if value="{{ hasArchived }}" hint-placeholder-val="{{ false }}">
-          <div onClick="{{ openArchive }}" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">archive ({{ archivedCount }})</div>
+        <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ hasArchived }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ openArchive }}" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">archive ({{ archivedCount }})</div>
+          </sc-if>
+          <div onClick="{{ exportData }}" title="download all your data as a file" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">export</div>
+          <div onClick="{{ startImport }}" title="load a previously exported file" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">import</div>
+          <div onClick="{{ openManageAccess }}" title="manage who can access Vignette" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">manage access</div>
+          <div onClick="{{ openChangeRequestsView }}" title="view change requests from guests" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">change requests</div>
+          <div onClick="{{ signOut }}" title="sign out" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#9A6B72">sign out</div>
         </sc-if>
-        <div onClick="{{ exportData }}" title="download all your data as a file" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">export</div>
-        <div onClick="{{ startImport }}" title="load a previously exported file" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">import</div>
-        <div onClick="{{ signOut }}" title="sign out" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#9A6B72">sign out</div>
+        <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ openChangeRequest }}" title="send a suggestion or request" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#232326">request a change</div>
+          <div onClick="{{ signOut }}" title="sign out" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#AFAAA5; user-select:none" style-hover="color:#9A6B72">sign out</div>
+        </sc-if>
       </div>
     </div>
 
@@ -646,6 +757,22 @@ class Component extends DCLogic {
     patError: null,
     authLoading: false,
     ghSha: null,
+    googleToken: null,
+    googleUserId: null,
+    googleUserName: null,
+    googleSha: null,
+    googleIsNew: false,
+    googleNameDraft: '',
+    manageAccessOpen: false,
+    allowlist: [],
+    allowlistLoading: false,
+    allowlistNewEmail: '',
+    changeRequestsViewOpen: false,
+    changeRequestsList: [],
+    changeRequestsLoading: false,
+    changeRequestOpen: false,
+    changeRequestText: '',
+    changeRequestSending: false,
     scene: 'Home',
     scenes: ['Home', 'Clothing', 'Tech'],
     sceneCreatorOpen: false,
@@ -1107,6 +1234,7 @@ class Component extends DCLogic {
   }
 
   async uploadImage(blob) {
+    if (this.state.googleToken) return this.uploadImageViaWorker(blob);
     const releaseId = await this.getImagesReleaseId();
     const name = `img-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
     const res = await fetch(`https://uploads.github.com/repos/pliggity/vignette/releases/${releaseId}/assets?name=${encodeURIComponent(name)}`, {
@@ -1252,7 +1380,15 @@ class Component extends DCLogic {
     if (!this._saveTimer) return;
     clearTimeout(this._saveTimer);
     this._saveTimer = null;
-    const { pat, ghSha } = this.state;
+    const { pat, ghSha, googleToken, googleUserId, googleSha } = this.state;
+    if (googleToken && googleUserId) {
+      fetch('https://vignette-oauth.pliggity.workers.dev/user-data', {
+        method: 'PUT', keepalive: true,
+        headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: googleUserId, content: this._saveData(), sha: googleSha })
+      }).catch(() => {});
+      return;
+    }
     if (!pat || !ghSha) return;
     const encoded = btoa(Array.from(new TextEncoder().encode(JSON.stringify(this._saveData())), b => String.fromCharCode(b)).join(''));
     fetch('https://api.github.com/repos/pliggity/vignette/contents/data.json', {
@@ -1283,10 +1419,20 @@ class Component extends DCLogic {
     }
     const code = params.get('code');
     if (code) {
-      const returnedState = params.get('state');
+      const returnedState = params.get('state') || '';
+      history.replaceState({}, '', window.location.pathname);
+      if (returnedState.startsWith('google:')) {
+        const savedState = sessionStorage.getItem('vignette-google-state');
+        sessionStorage.removeItem('vignette-google-state');
+        if (!savedState || returnedState !== savedState) {
+          this.setState({ patError: 'Sign-in could not be verified — please try again.' });
+          return;
+        }
+        this.exchangeGoogleCode(code);
+        return;
+      }
       const savedState = sessionStorage.getItem('vignette-oauth-state');
       sessionStorage.removeItem('vignette-oauth-state');
-      history.replaceState({}, '', window.location.pathname);
       if (!savedState || returnedState !== savedState) {
         this.setState({ patError: 'Sign-in could not be verified — please try again.' });
         return;
@@ -1300,6 +1446,13 @@ class Component extends DCLogic {
       const expRaw = localStorage.getItem('vignette-pat-exp');
       const patExpiresAt = expRaw ? Number(expRaw) : null;
       this.setState({ patRefresh, patExpiresAt }, () => this.loadFromGitHub(stored));
+      return;
+    }
+    const gToken = localStorage.getItem('vignette-google-token');
+    const gUserId = localStorage.getItem('vignette-google-user');
+    const gUserName = localStorage.getItem('vignette-google-name') || '';
+    if (gToken && gUserId) {
+      this.setState({ googleToken: gToken, googleUserId: gUserId, googleUserName: gUserName }, () => this.loadFromWorker());
     }
   }
 
@@ -1369,7 +1522,7 @@ class Component extends DCLogic {
   // Runtime calls componentDidUpdate with prevProps only — no prevState. We
   // diff against a snapshot kept on the instance instead.
   componentDidUpdate() {
-    if (!this._loaded || !this.state.pat || !this._prevData) return;
+    if (!this._loaded || !this._prevData) return;
     const s = this.state;
     const changed =
       this._prevData.items !== s.items ||
@@ -1378,7 +1531,10 @@ class Component extends DCLogic {
       this._prevData.nextId !== s.nextId ||
       this._prevData.archived !== s.archived ||
       this._prevData.tags !== s.tags;
-    if (changed) { this._snapshotData(); this.scheduleGithubSave(); }
+    if (!changed) return;
+    this._snapshotData();
+    if (s.googleToken && s.googleUserId) this.scheduleWorkerSave();
+    else if (s.pat) this.scheduleGithubSave();
   }
 
   _snapshotData() {
@@ -1477,7 +1633,198 @@ class Component extends DCLogic {
     localStorage.removeItem('vignette-pat');
     localStorage.removeItem('vignette-pat-refresh');
     localStorage.removeItem('vignette-pat-exp');
-    this.setState({ pat: null, patRefresh: null, patExpiresAt: null, ghSha: null, patError: null, authLoading: false });
+    localStorage.removeItem('vignette-google-token');
+    localStorage.removeItem('vignette-google-user');
+    localStorage.removeItem('vignette-google-name');
+    this._loaded = false;
+    this.setState({ pat: null, patRefresh: null, patExpiresAt: null, ghSha: null, patError: null, authLoading: false, googleToken: null, googleUserId: null, googleUserName: null, googleSha: null, googleIsNew: false });
+  }
+
+  GOOGLE_CLIENT_ID = '852894923642-6vdl2e8gknoeka6tko1j00u3h3eu8oi1.apps.googleusercontent.com';
+
+  _googleOauthState() {
+    const key = 'vignette-google-state';
+    let s = sessionStorage.getItem(key);
+    if (!s) {
+      const rand = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+      s = 'google:' + rand;
+      sessionStorage.setItem(key, s);
+    }
+    return s;
+  }
+
+  async exchangeGoogleCode(code) {
+    this.setState({ authLoading: true, patError: null });
+    try {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev/google-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, redirectUri: window.location.origin + window.location.pathname })
+      });
+      const data = await res.json();
+      if (data.error) {
+        const msg = data.error === 'not_allowed' ? 'You’re not on the guest list — ask pliggity to add you.' : 'Sign-in failed — try again.';
+        this.setState({ authLoading: false, patError: msg });
+        return;
+      }
+      localStorage.setItem('vignette-google-token', data.token);
+      if (data.isNewUser) {
+        this.setState({ authLoading: false, googleToken: data.token, googleIsNew: true });
+      } else {
+        localStorage.setItem('vignette-google-user', data.userId);
+        localStorage.setItem('vignette-google-name', data.userName || '');
+        this.setState({ authLoading: false, googleToken: data.token, googleUserId: data.userId, googleUserName: data.userName || '' }, () => this.loadFromWorker());
+      }
+    } catch {
+      this.setState({ authLoading: false, patError: 'Sign-in failed — try again.' });
+    }
+  }
+
+  async finalizeGoogleName(name) {
+    if (!name.trim()) return;
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (!slug) return;
+    this.setState({ authLoading: true, patError: null });
+    try {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev/google-auth/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.state.googleToken}` },
+        body: JSON.stringify({ name: name.trim(), slug })
+      });
+      const data = await res.json();
+      if (data.error) { this.setState({ authLoading: false, patError: 'Could not save name — try again.' }); return; }
+      localStorage.setItem('vignette-google-token', data.token);
+      localStorage.setItem('vignette-google-user', data.userId);
+      localStorage.setItem('vignette-google-name', data.userName);
+      this.setState({ authLoading: false, googleToken: data.token, googleUserId: data.userId, googleUserName: data.userName, googleIsNew: false }, () => this.loadFromWorker());
+    } catch {
+      this.setState({ authLoading: false, patError: 'Could not save name — try again.' });
+    }
+  }
+
+  async loadFromWorker() {
+    this._loaded = false;
+    const { googleToken, googleUserId } = this.state;
+    if (!googleToken || !googleUserId) return;
+    try {
+      const res = await fetch(`https://vignette-oauth.pliggity.workers.dev/user-data?user=${googleUserId}`, {
+        headers: { Authorization: `Bearer ${googleToken}` }
+      });
+      if (!res.ok) {
+        if (res.status === 401) { this.signOut(); return; }
+        throw new Error(`worker ${res.status}`);
+      }
+      const { content, sha } = await res.json();
+      const patch = { googleSha: sha || null, patError: null };
+      if (content && Array.isArray(content.items) && Array.isArray(content.boards)) {
+        const items = content.items.map(i => ({ ...i, scene: i.scene || i.folder || 'Home' }));
+        const boards = content.boards.map(b => ({ ...b, scene: b.scene !== undefined ? b.scene : null }));
+        patch.items = items;
+        patch.boards = boards;
+        patch.scenes = (Array.isArray(content.scenes) && content.scenes.length) ? content.scenes : Array.from(new Set([...this.state.scenes, ...items.map(i => i.scene).filter(Boolean)]));
+        patch.nextId = content.nextId || this.state.nextId;
+        patch.archived = content.archived || [];
+        patch.tags = content.tags || [];
+      } else {
+        patch.items = [];
+        patch.boards = [];
+      }
+      this.setState(patch, () => { this._loaded = true; this._snapshotData(); this.reprocessImages(); });
+    } catch (e) {
+      this.setState({ patError: 'Failed to load your data.', authLoading: false });
+    }
+  }
+
+  scheduleWorkerSave() {
+    clearTimeout(this._saveTimer);
+    this.setState({ syncing: true });
+    this._saveTimer = setTimeout(() => this.doWorkerSave(), 1500);
+  }
+
+  async doWorkerSave() {
+    const { googleToken, googleUserId, googleSha } = this.state;
+    if (!googleToken || !googleUserId) { this.setState({ syncing: false }); return; }
+    if (this._saving) { this._saveDirty = true; return; }
+    this._saving = true;
+    try {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev/user-data', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${googleToken}` },
+        body: JSON.stringify({ userId: googleUserId, content: this._saveData(), sha: googleSha })
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const result = await res.json();
+      this.setState({ syncing: false, saveError: null, googleSha: result.sha });
+    } catch (e) {
+      console.error('vignette worker save', e);
+      this.setState({ syncing: false, saveError: 'save failed' });
+    } finally {
+      this._saving = false;
+      if (this._saveDirty) { this._saveDirty = false; this.scheduleWorkerSave(); }
+    }
+  }
+
+  async uploadImageViaWorker(blob) {
+    const { googleToken } = this.state;
+    const res = await fetch('https://vignette-oauth.pliggity.workers.dev/upload-image', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'image/jpeg' },
+      body: blob
+    });
+    if (!res.ok) throw new Error('upload failed');
+    return (await res.json()).url;
+  }
+
+  async openManageAccess() {
+    this.setState({ manageAccessOpen: true, allowlistLoading: true, allowlist: [] });
+    try {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev/allowlist', {
+        headers: { Authorization: `Bearer ${this.state.pat}` }
+      });
+      const data = await res.json();
+      this.setState({ allowlist: data.allowlist || [], allowlistLoading: false });
+    } catch {
+      this.setState({ allowlistLoading: false });
+    }
+  }
+
+  async saveAllowlist(newList) {
+    try {
+      await fetch('https://vignette-oauth.pliggity.workers.dev/allowlist', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.state.pat}` },
+        body: JSON.stringify({ allowlist: newList })
+      });
+    } catch { /* swallow */ }
+  }
+
+  async openChangeRequestsView() {
+    this.setState({ changeRequestsViewOpen: true, changeRequestsLoading: true, changeRequestsList: [] });
+    try {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev/change-requests', {
+        headers: { Authorization: `Bearer ${this.state.pat}` }
+      });
+      const data = await res.json();
+      this.setState({ changeRequestsList: data.requests || [], changeRequestsLoading: false });
+    } catch {
+      this.setState({ changeRequestsLoading: false });
+    }
+  }
+
+  async submitChangeRequest() {
+    const { googleToken, googleUserName, changeRequestText } = this.state;
+    if (!changeRequestText.trim()) return;
+    this.setState({ changeRequestSending: true });
+    try {
+      await fetch('https://vignette-oauth.pliggity.workers.dev/change-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${googleToken}` },
+        body: JSON.stringify({ text: changeRequestText, userName: googleUserName })
+      });
+      this.setState({ changeRequestOpen: false, changeRequestText: '', changeRequestSending: false });
+    } catch {
+      this.setState({ changeRequestSending: false });
+    }
   }
 
   imgCss(item, fit) {
@@ -1657,7 +2004,7 @@ class Component extends DCLogic {
     try {
       const res = await fetch('https://vignette-oauth.pliggity.workers.dev/fetch-meta', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.state.pat}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.state.googleToken || this.state.pat}` },
         body: JSON.stringify({ url }),
         signal: ctrl.signal
       });
@@ -2205,6 +2552,64 @@ class Component extends DCLogic {
       patError: s.patError,
       authLoading: s.authLoading,
       githubAuthUrl: s.pat ? '' : 'https://github.com/login/oauth/authorize?client_id=Ov23lijpZJuBnpW8mbVl&scope=public_repo&state=' + this._oauthState(),
+      googleAuthUrl: (s.pat || s.googleToken) ? '' : `https://accounts.google.com/o/oauth2/v2/auth?client_id=${this.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}&response_type=code&scope=email%20profile&state=${this._googleOauthState()}`,
+      googleIsNew: s.googleIsNew,
+      googleNameDraft: s.googleNameDraft || '',
+      googleNameSetDraft: e => this.setState({ googleNameDraft: e.target.value }),
+      googleNameSubmit: () => this.finalizeGoogleName(this.state.googleNameDraft || ''),
+      googleNameKey: e => { if (e.key === 'Enter') this.finalizeGoogleName(this.state.googleNameDraft || ''); },
+      googleUserName: s.googleUserName || '',
+      googleReady: !!(s.googleToken && !s.googleIsNew),
+      isOwner: !!s.pat,
+      isGuest: !!(s.googleToken && !s.pat),
+      manageAccessOpen: s.manageAccessOpen,
+      closeManageAccess: () => this.setState({ manageAccessOpen: false }),
+      openManageAccess: () => this.openManageAccess(),
+      allowlist: s.allowlist,
+      allowlistLoading: s.allowlistLoading,
+      allowlistNewEmail: s.allowlistNewEmail || '',
+      allowlistSetNewEmail: e => this.setState({ allowlistNewEmail: e.target.value }),
+      allowlistAdd: () => {
+        const email = (this.state.allowlistNewEmail || '').trim().toLowerCase();
+        if (!email || !email.includes('@')) return;
+        if (this.state.allowlist.some(e2 => e2.email === email)) return;
+        const newList = [...this.state.allowlist, { email, addedAt: new Date().toISOString() }];
+        this.setState({ allowlist: newList, allowlistNewEmail: '' });
+        this.saveAllowlist(newList);
+      },
+      allowlistItems: s.allowlist.map((entry, i) => ({
+        email: entry.email,
+        name: entry.name || '',
+        slug: entry.slug || '',
+        label: entry.name ? `${entry.name} (${entry.email})` : entry.email,
+        remove: () => {
+          const newList = s.allowlist.filter((_, k) => k !== i);
+          this.setState({ allowlist: newList });
+          this.saveAllowlist(newList);
+        }
+      })),
+      allowlistEmpty: s.allowlist.length === 0,
+      changeRequestsViewOpen: s.changeRequestsViewOpen,
+      openChangeRequestsView: () => this.openChangeRequestsView(),
+      closeChangeRequestsView: () => this.setState({ changeRequestsViewOpen: false }),
+      changeRequestsList: s.changeRequestsList.map(r => ({
+        id: r.id,
+        label: `${r.userName || r.userId} wants:`,
+        text: r.text,
+        hasImage: !!r.imageUrl,
+        imageUrl: r.imageUrl || '',
+        date: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''
+      })),
+      changeRequestsEmpty: s.changeRequestsList.length === 0,
+      changeRequestsLoading: s.changeRequestsLoading,
+      changeRequestOpen: s.changeRequestOpen,
+      openChangeRequest: () => this.setState({ changeRequestOpen: true, changeRequestText: '' }),
+      closeChangeRequest: () => this.setState({ changeRequestOpen: false }),
+      changeRequestText: s.changeRequestText,
+      changeRequestSetText: e => this.setState({ changeRequestText: e.target.value }),
+      changeRequestSending: s.changeRequestSending,
+      changeRequestReady: !!s.changeRequestText.trim(),
+      submitChangeRequest: () => this.submitChangeRequest(),
       signOut: () => this.signOut()
     };
   }
