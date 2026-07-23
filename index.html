@@ -167,31 +167,63 @@ body{margin:0;background:#F7F7F5}
     </div>
   </sc-if>
 
-  <!-- Change Requests view modal (owner only) -->
+  <!-- Change Requests checklist modal (owner only) -->
   <sc-if value="{{ changeRequestsViewOpen }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeChangeRequestsView }}" class="wr-overlay" style="position:fixed; inset:0; background:rgba(35,35,38,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:36px; animation:wrFade .18s ease">
-      <div onClick="{{ stopClick }}" class="wr-modal" style="background:#fff; border-radius:20px; width:520px; max-height:80vh; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:14px; box-shadow:0 24px 70px rgba(40,30,20,.35)">
-        <div style="display:flex; align-items:center; gap:10px">
+      <div onClick="{{ stopClick }}" class="wr-modal" style="background:#fff; border-radius:20px; width:520px; max-height:82vh; overflow:auto; padding:28px 28px 24px; display:flex; flex-direction:column; gap:0; box-shadow:0 24px 70px rgba(40,30,20,.35)">
+
+        <!-- Header -->
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px">
           <div style="font-family:'Fraunces',serif; font-size:21px; color:#232326; flex:1">change requests</div>
           <div onClick="{{ closeChangeRequestsView }}" style="cursor:pointer; width:28px; height:28px; border-radius:99px; background:#F7F7F5; color:#726F6C; display:flex; align-items:center; justify-content:center; font-size:14px; user-select:none" style-hover="background:#EAE8E4">×</div>
         </div>
+
         <sc-if value="{{ changeRequestsLoading }}" hint-placeholder-val="{{ false }}">
-          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:4px 0">loading…</div>
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:16px 0">loading…</div>
         </sc-if>
-        <div style="display:flex; flex-direction:column; gap:10px">
+
+        <!-- Ad-hoc add row -->
+        <div style="display:flex; align-items:center; gap:0; border-bottom:1.5px solid #232326; margin:14px 0 20px">
+          <input value="{{ crDraft }}" onChange="{{ crDraftSet }}" onKeyDown="{{ crDraftKey }}" placeholder="add your own idea…" style="flex:1; font-family:'Inter',sans-serif; font-size:13px; color:#232326; background:transparent; border:none; outline:none; padding:6px 2px; caret-color:#B5603E">
+          <div onClick="{{ crAdd }}" style="cursor:pointer; font-family:ui-monospace,monospace; font-size:9.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#B5603E; padding:0 4px 4px; background:transparent; user-select:none" style-hover="opacity:.6">add</div>
+        </div>
+
+        <!-- Checklist -->
+        <div style="display:flex; flex-direction:column">
           <sc-for list="{{ changeRequestsList }}" as="cr" hint-placeholder-count="2">
-            <div style="display:flex; flex-direction:column; gap:6px; background:#F7F7F5; border-radius:12px; padding:12px">
-              <div style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.1em; color:#9B9793">{{ cr.label }} · {{ cr.date }}</div>
-              <div style="font-size:13px; color:#232326; line-height:1.5">{{ cr.text }}</div>
-              <sc-if value="{{ cr.hasImage }}" hint-placeholder-val="{{ false }}">
-                <img src="{{ cr.imageUrl }}" style="max-width:100%; border-radius:8px; margin-top:4px">
-              </sc-if>
+            <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid rgba(35,35,38,.08)">
+
+              <!-- Checkbox -->
+              <div onClick="{{ cr.toggle }}" style="cursor:pointer; flex:none; margin-top:3px; width:14px; height:14px; border:1.5px solid {{ cr.checkBorder }}; background:{{ cr.checkBg }}; position:relative">
+                <sc-if value="{{ cr.done }}" hint-placeholder-val="{{ false }}">
+                  <svg width="8" height="8" viewBox="0 0 10 8" style="position:absolute; left:1px; top:1px"><path d="M1 4L3.5 6.5L9 1" stroke="#F7F7F5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                </sc-if>
+              </div>
+
+              <!-- Content -->
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px">
+                <div style="font-size:13px; line-height:1.4; color:{{ cr.textColor }}; text-decoration:{{ cr.textDecor }}">{{ cr.text }}</div>
+                <sc-if value="{{ cr.hasAttribution }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-family:ui-monospace,monospace; font-size:9.5px; letter-spacing:.06em; color:#AFAAA5">{{ cr.attribution }}</div>
+                </sc-if>
+                <textarea value="{{ cr.notes }}" onChange="{{ cr.setNotes }}" placeholder="notes…" style="font-family:'Inter',sans-serif; font-size:11.5px; color:#726F6C; background:#F7F7F5; border:none; outline:none; border-radius:6px; padding:5px 8px; resize:none; min-height:28px; line-height:1.4"></textarea>
+              </div>
+
+              <!-- Remove -->
+              <div onClick="{{ cr.remove }}" style="cursor:pointer; flex:none; color:#232326; opacity:.25; font-size:16px; line-height:1; padding:0 2px; user-select:none" style-hover="opacity:.6">×</div>
+
             </div>
           </sc-for>
-          <sc-if value="{{ changeRequestsEmpty }}" hint-placeholder-val="{{ true }}">
-            <span style="font-size:12.5px; color:#9B9793; padding:4px 2px">no requests yet</span>
-          </sc-if>
         </div>
+
+        <!-- Empty state -->
+        <sc-if value="{{ changeRequestsEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:#9B9793; padding:8px 0">nothing yet — add your own above, or wait for guest requests</div>
+        </sc-if>
+
+        <!-- Footer count -->
+        <div style="font-family:ui-monospace,monospace; font-size:9.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:rgba(35,35,38,.35); margin-top:18px">{{ changeRequestsOpen }} open · {{ changeRequestsDone }} done</div>
+
       </div>
     </div>
   </sc-if>
@@ -770,6 +802,8 @@ class Component extends DCLogic {
     changeRequestsViewOpen: false,
     changeRequestsList: [],
     changeRequestsLoading: false,
+    crDraft: '',
+    crSha: null,
     changeRequestOpen: false,
     changeRequestText: '',
     changeRequestSending: false,
@@ -1805,10 +1839,52 @@ class Component extends DCLogic {
         headers: { Authorization: `Bearer ${this.state.pat}` }
       });
       const data = await res.json();
-      this.setState({ changeRequestsList: data.requests || [], changeRequestsLoading: false });
+      this.setState({ changeRequestsList: data.requests || [], changeRequestsLoading: false, crSha: data.sha || null });
     } catch {
       this.setState({ changeRequestsLoading: false });
     }
+  }
+
+  _crSaveTimer = null;
+
+  async saveChangeRequests(list) {
+    try {
+      const res = await fetch('https://vignette-oauth.pliggity.workers.dev/change-requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.state.pat}` },
+        body: JSON.stringify({ requests: list, sha: this.state.crSha })
+      });
+      const data = await res.json();
+      if (data.sha) this.setState({ crSha: data.sha });
+    } catch { /* swallow */ }
+  }
+
+  toggleChangeRequest(id) {
+    const list = this.state.changeRequestsList.map(r => r.id === id ? { ...r, done: !r.done } : r);
+    this.setState({ changeRequestsList: list });
+    this.saveChangeRequests(list);
+  }
+
+  removeChangeRequest(id) {
+    const list = this.state.changeRequestsList.filter(r => r.id !== id);
+    this.setState({ changeRequestsList: list });
+    this.saveChangeRequests(list);
+  }
+
+  updateChangeRequestNotes(id, notes) {
+    const list = this.state.changeRequestsList.map(r => r.id === id ? { ...r, notes } : r);
+    this.setState({ changeRequestsList: list });
+    clearTimeout(this._crSaveTimer);
+    this._crSaveTimer = setTimeout(() => this.saveChangeRequests(list), 1500);
+  }
+
+  addAdHocChangeRequest() {
+    const text = (this.state.crDraft || '').trim();
+    if (!text) return;
+    const item = { id: `adhoc-${Date.now()}`, text, done: false, notes: '', isAdHoc: true, createdAt: new Date().toISOString() };
+    const list = [...this.state.changeRequestsList, item];
+    this.setState({ changeRequestsList: list, crDraft: '' });
+    this.saveChangeRequests(list);
   }
 
   async submitChangeRequest() {
@@ -2596,14 +2672,27 @@ class Component extends DCLogic {
       closeChangeRequestsView: () => this.setState({ changeRequestsViewOpen: false }),
       changeRequestsList: s.changeRequestsList.map(r => ({
         id: r.id,
-        label: `${r.userName || r.userId} wants:`,
-        text: r.text,
-        hasImage: !!r.imageUrl,
-        imageUrl: r.imageUrl || '',
-        date: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''
+        text: r.text || '',
+        done: !!r.done,
+        notes: r.notes || '',
+        hasAttribution: !r.isAdHoc && !!(r.userName || r.userId),
+        attribution: r.isAdHoc ? '' : ((r.userName || r.userId || '') + (r.createdAt ? ' · ' + new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '')),
+        checkBg: r.done ? '#5C6B4F' : 'transparent',
+        checkBorder: r.done ? '#5C6B4F' : '#232326',
+        textColor: r.done ? 'rgba(35,35,38,.35)' : '#232326',
+        textDecor: r.done ? 'line-through' : 'none',
+        toggle: () => this.toggleChangeRequest(r.id),
+        remove: () => this.removeChangeRequest(r.id),
+        setNotes: e => this.updateChangeRequestNotes(r.id, e.target.value),
       })),
+      changeRequestsOpen: s.changeRequestsList.filter(r => !r.done).length,
+      changeRequestsDone: s.changeRequestsList.filter(r => r.done).length,
       changeRequestsEmpty: s.changeRequestsList.length === 0,
       changeRequestsLoading: s.changeRequestsLoading,
+      crDraft: s.crDraft || '',
+      crDraftSet: e => this.setState({ crDraft: e.target.value }),
+      crDraftKey: e => { if (e.key === 'Enter') this.addAdHocChangeRequest(); },
+      crAdd: () => this.addAdHocChangeRequest(),
       changeRequestOpen: s.changeRequestOpen,
       openChangeRequest: () => this.setState({ changeRequestOpen: true, changeRequestText: '' }),
       closeChangeRequest: () => this.setState({ changeRequestOpen: false }),
